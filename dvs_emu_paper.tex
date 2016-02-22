@@ -1,0 +1,56 @@
+\documentclass[]{article}
+\usepackage[utf8]{inputenc}
+
+%opening
+\title{A Real-time Dynamic Vision Sensor Emulator using Off-the-shelf Hardware}
+\author{Garibaldi Pineda García}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Vision is one of our most important senses, a vast amount of information is perceived through our eyes. Neuroscientists have performed several studies using vision as input to their experiments. However, computational neuroscience has typically used Poisson-encoded images as spike-encoded visual sources. Recently neuromorphic Dynamic Vision Sensors (DVS) have surfaced, while they have excellent capabilities, they remain scarce and difficult to use.
+
+We propose a software-based visual input system, it's inspired by the behaviour of a DVS, but uses a digital camera as a sensor. By using readily-available components, we believe, most scientist would have access to spike-based visual input. While the primary goal was to use the system as a real-time input, it is also able to transcode well established images and video databases into spike train representations.
+
+\end{abstract}
+
+\section{Introduction}
+DVS\\
+Carver Mead, Zurich, Sevilla\\
+
+Cameras are in almost every computing device.\\
+
+Processing power today allows for these devices to perform a few calculations on the image stream to convert into a spike representation.
+
+Other models not in real time or require high performance hardware or FPGAs.
+
+
+\section{Work}
+RGB images are gamma-encoded, to better utilize bits and be compliant with CRT monitors.
+
+DVS pixels output the logarithm of their input current.\\
+
+Asynchronous pixel behaviour is approximated via differencing the current and a reference frame. \\
+
+Rate-based output is possible, though it may overwhelm communication channels.
+
+We propose different time encodings (raw value/binary, threshold multiples/binary, threshold multiples/linear)\\
+
+Extra behaviours: Local inhibition reduces bandwidth, persistence of stimuli over frames. 
+
+Adaptive threshold, slow-charging pixels by reducing the threshold.\\
+Less parameters to configure.
+
+\section{Results}
+
+Real-time DVS emulation on consumer hardware (Intel i5, 8GB ram)
+
+\section{Conclusion}
+
+GPU computing version would allow for higher resolutions.
+
+Working on ganglion cell/Difference of Gaussian encoding.
+
+\end{document}
