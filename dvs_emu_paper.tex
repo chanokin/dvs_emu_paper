@@ -57,7 +57,7 @@ Pixels in DVSs are independent and transform light input into a logarithmic repr
   \caption{Gamma encoding and decoding functions, $\gamma = 2.2$}
 \end{figure}
 
-Asynchronous pixel behaviour is approximated via differencing the current image obtained by the camera and a reference frame; whenever a pixel's difference is larger than a certain threshold, we mark that position as ``spiked''. Depending on the selected type of output we simulate a receiver and update the reference accordingly. This is the basic DVS emulation and it's illustrated in Figure~\ref{fig:dvs_emu}.
+Asynchronous pixel behaviour is approximated via differencing the current image obtained by the camera and a reference frame; whenever a pixel's difference is larger than a certain threshold, we mark that position as ``spiked''. Each spike carries a flag, \textit{up} if there was a positive change in intensity or \textit{down} if a decrease was registered, this can also be thought of as a spike's \textit{sign}. Depending on the selected type of output we simulate a receiver and update the reference accordingly. This is the basic DVS emulation and it's illustrated in Figure~\ref{fig:dvs_emu}.
 
 \begin{figure}[htb]
   \includegraphics[width=0.5\textwidth]{dvs_emu}
@@ -103,16 +103,23 @@ where the subtraction of $N_{H}^{last}W_{b}$ resets the time reference to a mult
  N_{H}^{now} = T - \mathrm{mod}\left(\Delta t, \;\; T\right)
  \label{eq:new_Nh_linear}
 \end{equation}
+here, $\Delta I_o$ is the change in intensity derived from the spike stream, $t_{now}$ is the time when the current spike arrived, $t_{last}$ is the time last spike was received, $T$ is the inverse of the camera's frames per second, and $\mathrm{mod}$ calculates the arguments' division remainder.
 
+To overcome the limitation of encoded values we propose \textit{binary encoding} of either the absolute difference in intensity or the number of thresholds exceeded. The main advantage of this technique would be to achieve large values with fewer time bins as the growth is exponential (Fig. \ref{fig:exponential_time}). We propose to use this encoding in two ways: \textit{shoot-and-refine} and \textit{full value}. 
 
+In the \textit{shoot-and-refine} mode, a single spike is sent with an over- or underestimate of the desired value (i.e. the next power of two), and in the following frames we send at most one spike to refine the received value towards the desired one. Decoding can be done in a similar way as the linear case
+\begin{equation}
+N_{H}^{now} = 2^{ T - \mathrm{mod}\left(\Delta t, \;\; T\right) }
+\label{eq:new_Nh_exp}
+\end{equation}
 
-%  \Delta N_{H} = \mathrm{mod}\left(t_{now} - t_{last}, T\right)\times H
-%  \Delta N_{H} = \left\lfloor\frac{t_{now} - t_{last}}{W_{b}}\right\rfloor
+For the \textit{full value} mode many spikes would be sent per pixel each frame, thus providing better resolution to the sent value. Decoding multiple spikes per frame can be a bit more difficult but 
 
-where $\Delta I_o$ is the change in intensity derived from the spike stream, $t_{now}$ is the time when the current spike arrived, $t_{last}$ is the time last spike was received, $T$ is the inverse of the camera's frames per second, and $\mathrm{mod}$ calculates the arguments' division remainder.
-
-To overcome the limitation of encoded values we propose binary encoding of either the absolute difference in intensity or the number of thresholds exceeded. 
-We propose different time encodings (raw value/binary, threshold multiples/binary, threshold multiples/linear)\\
+\begin{figure}[htb]
+  \includegraphics[width=0.5\textwidth]{spike_stream_time_exp}
+  \label{fig:exponential_time}
+  \caption{Exponential time-based encoding of thresholds ($H$) exceeded}
+\end{figure} 
 
 \subsection{Additional behaviours}
 \subsubsection{Local inhibition} reduces bandwidth, persistence of spatial stimuli over frames. 
