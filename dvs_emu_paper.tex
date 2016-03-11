@@ -13,7 +13,7 @@
 
 %opening
 \title{A Real-time Dynamic Vision Sensor Emulator using Off-the-shelf Hardware}
-\author{Garibaldi Pineda García}
+\author{Pineda García, Garibaldi \and Camilleri, Patrick \and Furber, Steve}
 
 
 
@@ -81,12 +81,12 @@ where $N_{H}$ is the number of spikes needed to represent the change in intensit
 \subsubsection{Time-based}
 In its worst case rate-based encoding can send a spike per millisecond per pixel, which can potentially saturate communication channels. One way to prevent this is to encode the value that each spike represents in the time each it is sent.
 
-First we propose to linearly encode the number of thresholds exceeded. To do this the result of Equation~\ref{eq:num_spikes_rate} would in, a bin width $\left(W_{b}\right)$ of 1~ms was used for time discretization. As in the previous case the time to send all spikes for the current frame is at most $T$, which means the maximum difference possible is $T\cdot H$.
+First we propose to linearly encode the number of thresholds exceeded. To do this the result of Equation~\ref{eq:num_spikes_rate} would in, a bin width $\left(W_{b}\right)$ of 1~ms was used for time discretization. As in the previous case the time to send all spikes for the current frame is at most $N_{b}=T/W_{b}$, which means the maximum difference possible is $T\cdot H$.
 
 Figure~\ref{fig:linear_time} shows the value-to-spike-time relation, in our proposal earlier spikes represent larger changes in intensity. The main advantage of this encoding is that a single spike could represent multiple rate-based spikes, though the encoded values are limited by time resolution and the frame rate of the camera.
 
 \begin{figure}[htb]
-  \includegraphics[width=0.5\textwidth]{spike_stream_time}
+  \includegraphics[width=0.5\textwidth]{spike_values_linear}
   \label{fig:linear_time}
   \caption{Linear time-based encoding of thresholds ($H$) exceeded}
 \end{figure} 
@@ -97,29 +97,48 @@ To decode on the receiver end, we must keep track of the time and value from the
 \Delta t = t_{now} - \left( t_{last} - N_{H}^{last}W_{b} \right)
 \label{eq:time_diff}
 \end{equation}
-where the subtraction of $N_{H}^{last}W_{b}$ resets the time reference to a multiple of time period $T$. From this it is easy to compute the number of thresholds exceeded using the expression
-
+where the subtraction of $N_{H}^{last}W_{b}$ resets the time reference to a multiple of time period $T$. We now divide the time difference by the time-bin width to obtain the current bin
 \begin{equation}
- N_{H}^{now} = T - \mathrm{mod}\left(\Delta t, \;\; T\right)
+B = \frac{\mathrm{mod}\left(\Delta t, \;\; T\right)}{W_{b}}
+\label{eq:bin_compute}
+\end{equation}
+here, $\mathrm{mod}$ calculates the arguments' division remainder. Now that the time bin $B$ is known, all it takes to compute the number of thresholds exceeded is
+\begin{equation}
+ N_{H}^{now} = \left\lfloor N_{b} - B \right\rfloor
  \label{eq:new_Nh_linear}
 \end{equation}
-here, $\Delta I_o$ is the change in intensity derived from the spike stream, $t_{now}$ is the time when the current spike arrived, $t_{last}$ is the time last spike was received, $T$ is the inverse of the camera's frames per second, and $\mathrm{mod}$ calculates the arguments' division remainder.
 
-To overcome the limitation of encoded values we propose \textit{binary encoding} of either the absolute difference in intensity or the number of thresholds exceeded. The main advantage of this technique would be to achieve large values with fewer time bins as the growth is exponential (Fig. \ref{fig:exponential_time}). We propose to use this encoding in two ways: \textit{shoot-and-refine} and \textit{full value}. 
-
-In the \textit{shoot-and-refine} mode, a single spike is sent with an over- or underestimate of the desired value (i.e. the next power of two), and in the following frames we send at most one spike to refine the received value towards the desired one. Decoding can be done in a similar way as the linear case
-\begin{equation}
-N_{H}^{now} = 2^{ T - \mathrm{mod}\left(\Delta t, \;\; T\right) }
-\label{eq:new_Nh_exp}
-\end{equation}
-
-For the \textit{full value} mode many spikes would be sent per pixel each frame, thus providing better resolution to the sent value. Decoding multiple spikes per frame can be a bit more difficult but 
+%and reduce the probability of getting the wrong value
+To overcome the limitation on maximum encoded values  we propose \textit{binary encoding} of either the absolute difference in intensity or the number of thresholds exceeded. The main advantage of this technique would be to achieve large values with fewer time bins as the growth is exponential (Fig. \ref{fig:exponential_time}). We propose to use this encoding in two ways: \textit{shoot-and-refine} and \textit{full value}. 
 
 \begin{figure}[htb]
-  \includegraphics[width=0.5\textwidth]{spike_stream_time_exp}
+  \includegraphics[width=0.5\textwidth]{spike_values_exp}
   \label{fig:exponential_time}
   \caption{Exponential time-based encoding of thresholds ($H$) exceeded}
 \end{figure} 
+
+In the \textit{shoot-and-refine} mode, a single spike is sent with an over- or underestimate of the desired value (e.g. the next power of two), and in the following frames we send at most one spike to refine the received value towards the desired one. Decoding can be done in a similar way as the linear case, but we divide the available time in $N_{b}$ bins of width is $W_{b} = T/N_{b}$. Now to compute the time difference
+\begin{equation}
+\Delta t = t_{now} - \left( t_{last} - log_{2}(N_{H}^{last})W_{b} \right)
+\label{eq:time_diff_exp}
+\end{equation}
+and the right bin is calculated as in Eq.~\ref{eq:bin_compute}, finally for the decoded value
+\begin{equation}
+N_{H}^{now} = 2^{ \left\lfloor N_{b} - B \right\rfloor }
+\label{eq:new_Nh_exp}
+\end{equation}
+
+For the \textit{full value} mode many spikes would be sent per pixel each frame, thus providing better resolution to the sent value, the downside to this is that an accumulation buffer is needed in addition to the previous spike time and value buffers. Decoding multiple spikes per frame has to be split in two cases: first if the new spike arrives before the current period is finished, then we accumulate its value to the current decoded value; otherwise we replace the contents of the accumulation buffer with the newly decoded value.
+
+\subsubsection{What if spikes get lost?}
+
+Initially we described a system where every spike that is sent will be captured on the receiver end, but this is not always the case. To cope with the latter cases, we now introduce a history decay mechanism which will allow the receiver to, in the long term, recover from missing spikes. 
+
+\begin{figure}[htb]
+  \includegraphics[width=0.5\textwidth]{dvs_emu_decay}
+  \label{fig:dvs_emu_decay}
+  \caption{DVS emulation with history decay. Circles indicate operations and rectangles states of data}
+\end{figure}
 
 \subsection{Additional behaviours}
 \subsubsection{Local inhibition} reduces bandwidth, persistence of spatial stimuli over frames. 
