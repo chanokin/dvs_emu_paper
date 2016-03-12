@@ -13,7 +13,7 @@
 
 %opening
 \title{A Real-time Dynamic Vision Sensor Emulator using Off-the-shelf Hardware}
-\author{Pineda García, Garibaldi \and Camilleri, Patrick \and Furber, Steve}
+\author{Pineda García, Garibaldi \and Camilleri, Patrick \and Liu, Qian \and Furber, Steve}
 
 
 
@@ -53,16 +53,18 @@ Pixels in DVSs are independent and transform light input into a logarithmic repr
 
 \begin{figure}[htb]
   \includegraphics[width=0.5\textwidth]{gamma_coding}
-  \label{fig:gamma_coding}
+
   \caption{Gamma encoding and decoding functions, $\gamma = 2.2$}
+  \label{fig:gamma_coding}
 \end{figure}
 
 Asynchronous pixel behaviour is approximated via differencing the current image obtained by the camera and a reference frame; whenever a pixel's difference is larger than a certain threshold, we mark that position as ``spiked''. Each spike carries a flag, \textit{up} if there was a positive change in intensity or \textit{down} if a decrease was registered, this can also be thought of as a spike's \textit{sign}. Depending on the selected type of output we simulate a receiver and update the reference accordingly. This is the basic DVS emulation and it's illustrated in Figure~\ref{fig:dvs_emu}.
 
 \begin{figure}[htb]
   \includegraphics[width=0.5\textwidth]{dvs_emu}
-  \label{fig:dvs_emu}
+
   \caption{DVS emulation diagram. Circles indicate operations and rectangles states of data}
+  \label{fig:dvs_emu}
 \end{figure}
 
 \subsection{Output modes}
@@ -72,10 +74,10 @@ As in previous emulators\cite{dvs_emu}, the standard output format is rate-based
   \label{eq:num_spikes_rate}
   N_{H} = \left\lfloor \mathrm{min}\left( T, \;\; \frac{\Delta I}{H} \right) \right\rfloor
 \end{equation}
-where $N_{H}$ is the number of spikes needed to represent the change in intensity $\Delta I$ in terms of the threshold $H$. Notice that the maximum time to transmit all the spikes for one frame is bound by the frame rate of the camera~$(fps)$. If it's only possible to send one spike per millisecond, we can send as many spikes as milliseconds in one frame-capture period ($T = 1000/fps$). At this stage we model a perfect receiver, so the quantity that will update the reference is
+where $N_{H}$ is the number of spikes needed to represent the change in intensity $\Delta I$ in terms of the threshold $H$. Notice that the maximum time to transmit all the spikes for one frame is bound by the frame rate of the camera~$(fps)$. If it's only possible to send one spike per millisecond, we can send as many spikes as milliseconds in one frame-capture period ($T = 1000/fps$). At this stage we model a perfect receiver, so the update rule for the reference is
 \begin{equation}
   \label{eq:ref_update}
-  \Delta R = N_{s}\times H
+  R_{now} = R_{old} + N_{s}\times H
 \end{equation}
 
 \subsubsection{Time-based}
@@ -87,17 +89,18 @@ Figure~\ref{fig:linear_time} shows the value-to-spike-time relation, in our prop
 
 \begin{figure}[htb]
   \includegraphics[width=0.5\textwidth]{spike_values_linear}
-  \label{fig:linear_time}
+
   \caption{Linear time-based encoding of thresholds ($H$) exceeded}
+  \label{fig:linear_time}
 \end{figure} 
 
 To decode on the receiver end, we must keep track of the time and value from the last collected spiked. Let $\Delta t$ be the difference in arrival time between the previous and current spike~(Eq. \ref{eq:time_diff})
 
 \begin{equation}
-\Delta t = t_{now} - \left( t_{last} - N_{H}^{last}W_{b} \right)
+\Delta t = t_{now} - \left( t_{last} - \left[N_{b} - N_{H}^{last}W_{b} \right] \right)
 \label{eq:time_diff}
 \end{equation}
-where the subtraction of $N_{H}^{last}W_{b}$ resets the time reference to a multiple of time period $T$. We now divide the time difference by the time-bin width to obtain the current bin
+where the subtraction of $N_{b} - N_{H}^{last}W_{b}$ sets the time reference to a multiple of time period $T$. We now divide the time difference by the time-bin width to obtain the current bin
 \begin{equation}
 B = \frac{\mathrm{mod}\left(\Delta t, \;\; T\right)}{W_{b}}
 \label{eq:bin_compute}
@@ -113,16 +116,23 @@ To overcome the limitation on maximum encoded values  we propose \textit{binary 
 
 \begin{figure}[htb]
   \includegraphics[width=0.5\textwidth]{spike_values_exp}
-  \label{fig:exponential_time}
+
   \caption{Exponential time-based encoding of thresholds ($H$) exceeded}
+  \label{fig:exponential_time}
 \end{figure} 
 
 In the \textit{shoot-and-refine} mode, a single spike is sent with an over- or underestimate of the desired value (e.g. the next power of two), and in the following frames we send at most one spike to refine the received value towards the desired one. Decoding can be done in a similar way as the linear case, but we divide the available time in $N_{b}$ bins of width is $W_{b} = T/N_{b}$. Now to compute the time difference
 \begin{equation}
-\Delta t = t_{now} - \left( t_{last} - log_{2}(N_{H}^{last})W_{b} \right)
+\Delta t = t_{now} - \left( t_{last} - 2*\left[N_{b} - log_{2}(N_{H}^{last})W_{b} + 1\right] \right)
 \label{eq:time_diff_exp}
 \end{equation}
-and the right bin is calculated as in Eq.~\ref{eq:bin_compute}, finally for the decoded value
+
+Since we are using time bins that are larger than the system's time resolution, the term $N_{b} - N_{H}^{last}W_{b}$ of Eq.~\ref{eq:time_diff} into
+\begin{equation}
+ 2*\left[N_{b} - log_{2}(N_{H}^{last})W_{b} + 1\right]
+\end{equation}
+
+The correct bin is calculated using Eq.~\ref{eq:bin_compute} as in the linear case; finally for the decoded value
 \begin{equation}
 N_{H}^{now} = 2^{ \left\lfloor N_{b} - B \right\rfloor }
 \label{eq:new_Nh_exp}
@@ -130,21 +140,55 @@ N_{H}^{now} = 2^{ \left\lfloor N_{b} - B \right\rfloor }
 
 For the \textit{full value} mode many spikes would be sent per pixel each frame, thus providing better resolution to the sent value, the downside to this is that an accumulation buffer is needed in addition to the previous spike time and value buffers. Decoding multiple spikes per frame has to be split in two cases: first if the new spike arrives before the current period is finished, then we accumulate its value to the current decoded value; otherwise we replace the contents of the accumulation buffer with the newly decoded value.
 
-\subsubsection{What if spikes get lost?}
-
-Initially we described a system where every spike that is sent will be captured on the receiver end, but this is not always the case. To cope with the latter cases, we now introduce a history decay mechanism which will allow the receiver to, in the long term, recover from missing spikes. 
-
-\begin{figure}[htb]
-  \includegraphics[width=0.5\textwidth]{dvs_emu_decay}
-  \label{fig:dvs_emu_decay}
-  \caption{DVS emulation with history decay. Circles indicate operations and rectangles states of data}
-\end{figure}
 
 \subsection{Additional behaviours}
-\subsubsection{Local inhibition} reduces bandwidth, persistence of spatial stimuli over frames. 
-\subsubsection{Adaptive threshold} slow-charging pixels by reducing the threshold.\\
-Less parameters to configure.
-\subsubsection{History decay}
+
+In this segment we describe modifications done to the basic DVS emulator, these changes are rendered in Figure~\ref{fig:dvs_emu_inh}. In the lower left a history decay mechanism was added to the receiver model, constant threshold has been exchanged by an adaptive version, and an inhibitory block (\textit{\textsf{max}}) completes the list of changes.
+
+\begin{figure}[htb]
+  
+  \includegraphics[width=0.5\textwidth]{dvs_emu_decay_adapt_inh}
+  \caption{DVS emulation with adaptive thresholds.}
+  \label{fig:dvs_emu_inh}
+\end{figure}
+
+\subsubsection{History decay - What if spikes get lost?}
+
+Initially we described a system where every spike that is sent will be captured on the receiver end, but this is not always the case. To cope with the latter cases, we now introduce a history decay mechanism which will allow the receiver to, in the long term, recover from missing spikes. Let $D = \{0, 1\}$ be the weight history has to calculate the new reference value, then the reference's update rule becomes
+\begin{equation}
+\label{eq:ref_update_decay}
+R_{now} = D\times R_{old} + N_{s}\times H
+\end{equation}
+
+%\begin{figure}[htb]
+%  \includegraphics[width=0.5\textwidth]{dvs_emu_decay}
+%
+%  \caption{DVS emulation with history decay.}
+%  \label{fig:dvs_emu_decay}
+%\end{figure}
+
+\subsubsection{Adaptive threshold} 
+A subtle detail that other emulators have not captured is the slow-charging pixels, cameras would capture these as similar values in each frame thus the difference would never be enough to generate a spike. Meanwhile in a real DVS pixels receiving light that is not enough to immediately trigger a spike gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold in a per-pixel basis, that is reduce it if a pixel did not create a spike. Since thresholds value may lowered, they also have to be increased if a spike was generated. This increment also adds a ``protection'' against fast changing pixels which could be the result of hardware malfunction or bring no information to the image. Figure~\ref{fig:dvs_emu_adapt} shows how threshold adaptation fits into the DVS emulator diagram.
+
+%\begin{figure}[htb]
+%
+%  \includegraphics[width=0.5\textwidth]{dvs_emu_decay_adapt}
+%  \caption{DVS emulation with adaptive thresholds.}
+%  \label{fig:dvs_emu_adapt}
+%\end{figure}
+
+
+\subsubsection{Local inhibition} 
+In mammalian retinas inhibitory circuits play an important role, some researchers have suggested that it reduces the number of spikes needed to represent what the eye is seeing\{ref\}. Our inhibition mechanism follows the same idea, since neighbouring pixels have similar values, we suppose that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX-like operation\{ref\} of pixel areas. An example is shown in Figure~\ref{fig:local_inh}, the maximum value (in green; 77) will generate a spike, while other values (in red; 0, 31, and 15) are blocked.
+
+\begin{figure}[htb]
+
+  \includegraphics[width=0.5\textwidth]{inh_local_max}
+  \caption{Local inhibition mechanism, quantities represent the absolute value of the difference between an image and reference.}
+  \label{fig:local_inh}
+\end{figure}
+
+
 Open source, and available in github.com\\
 
 \section{Results}
