@@ -1,6 +1,8 @@
 \documentclass[twocolumn]{article}
 \usepackage[utf8]{inputenc}
 
+\usepackage{todonotes}
+
 \usepackage[backend=bibtex,style=ieee]{biblatex}
 \bibliography{biblio_dvs_emu_paper}
 
@@ -12,7 +14,7 @@
 %\usepackage{multicol}
 
 %opening
-\title{A Real-time Dynamic Vision Sensor Emulator using Off-the-shelf Hardware}
+\title{pyDVS: A Real-time Dynamic Vision Sensor Emulator using Off-the-Shelf Hardware}
 \author{Pineda García, Garibaldi \and Camilleri, Patrick \and Liu, Qian \and Furber, Steve}
 
 
@@ -51,21 +53,21 @@ In this work, we propose to emulate the behaviour of a DVS using a conventional 
 
 Pixels in DVSs are independent and transform light input into a logarithmic representation. Most commercial cameras produce gamma-encoded images~\cite{Poynton_digital_video} to better utilize bits and, in older days, to be compliant with cathode ray tube (CRT) monitors. Figure~\ref{fig:gamma_coding} shows the response for the encoding process (crosses), CRT monitors (hexagons) and decoding process (dots). Since the encoding response is similar to the logarithmic used in the DVS, we skip this step of the emulation.
 
-\begin{figure}[htb]
-  \includegraphics[width=0.5\textwidth]{gamma_coding}
-
-  \caption{Gamma encoding and decoding functions, $\gamma = 2.2$}
-  \label{fig:gamma_coding}
-\end{figure}
-
-Asynchronous pixel behaviour is approximated via differencing the current image obtained by the camera and a reference frame; whenever a pixel's difference is larger than a certain threshold, we mark that position as ``spiked''. Each spike carries a flag, \textit{up} if there was a positive change in intensity or \textit{down} if a decrease was registered, this can also be thought of as a spike's \textit{sign}. Depending on the selected type of output we simulate a receiver and update the reference accordingly. This is the basic DVS emulation and it's illustrated in Figure~\ref{fig:dvs_emu}.
-
+%\begin{figure}[htb]
+%  \includegraphics[width=0.5\textwidth]{gamma_coding}
+%
+%  \caption{Gamma encoding and decoding functions, $\gamma = 2.2$}
+%  \label{fig:gamma_coding}
+%\end{figure}
 \begin{figure}[htb]
   \includegraphics[width=0.5\textwidth]{dvs_emu}
-
+  
   \caption{DVS emulation diagram. Circles indicate operations and rectangles states of data}
   \label{fig:dvs_emu}
 \end{figure}
+
+Figure~\ref{fig:dvs_emu} shows the basic DVS emulation diagram, first asynchronous pixel behaviour is approximated via differencing the current image obtained by the camera and a reference frame. To simulate the spike emission we set a rule, so that whenever a pixel's difference is larger than a certain threshold, we mark that position as ``spiked''. Each spike carries a flag, \textit{up} if there was a positive change in intensity or \textit{down} if a decrease was registered, this can also be thought of as a spike's \textit{sign}. Finally, depending on the selected type of output, we simulate a receiver and update the reference frame accordingly. 
+
 
 \subsection{Output modes}
 \subsubsection{Rate-based}
@@ -121,7 +123,7 @@ To overcome the limitation on maximum encoded values  we propose \textit{binary 
   \label{fig:exponential_time}
 \end{figure} 
 
-In the \textit{shoot-and-refine} mode, a single spike is sent with an over- or underestimate of the desired value (e.g. the next power of two), and in the following frames we send at most one spike to refine the received value towards the desired one. Decoding can be done in a similar way as the linear case, but we divide the available time in $N_{b}$ bins of width is $W_{b} = T/N_{b}$. Now to compute the time difference
+In the \textit{shoot-and-refine} mode, a single spike is sent with an over- or underestimate of the desired value (e.g. the next power of two), and in the following frames we send at most one spike to refine the received value towards the desired one (similar to sar adc \textbf{\{ref\}}). Decoding can be done in a similar way as the linear case, but we divide the available time in $N_{b}$ bins of width is $W_{b} = T/N_{b}$. Now to compute the time difference
 \begin{equation}
 \Delta t = t_{now} - \left( t_{last} - 2*\left[N_{b} - log_{2}(N_{H}^{last})W_{b} + 1\right] \right)
 \label{eq:time_diff_exp}
@@ -140,6 +142,7 @@ N_{H}^{now} = 2^{ \left\lfloor N_{b} - B \right\rfloor }
 
 For the \textit{full value} mode many spikes would be sent per pixel each frame, thus providing better resolution to the sent value, the downside to this is that an accumulation buffer is needed in addition to the previous spike time and value buffers. Decoding multiple spikes per frame has to be split in two cases: first if the new spike arrives before the current period is finished, then we accumulate its value to the current decoded value; otherwise we replace the contents of the accumulation buffer with the newly decoded value.
 
+\missingfigure{RATE vs TIME vs TIME-EXP spike trains}
 
 \subsection{Additional behaviours}
 
@@ -152,7 +155,7 @@ In this segment we describe modifications done to the basic DVS emulator, these 
   \label{fig:dvs_emu_inh}
 \end{figure}
 
-\subsubsection{History decay - What if spikes get lost?}
+\subsubsection{History decay} % - What if spikes get lost?}
 
 Initially we described a system where every spike that is sent will be captured on the receiver end, but this is not always the case. To cope with the latter cases, we now introduce a history decay mechanism which will allow the receiver to, in the long term, recover from missing spikes. Let $D = \{0, 1\}$ be the weight history has to calculate the new reference value, then the reference's update rule becomes
 \begin{equation}
@@ -179,7 +182,7 @@ A subtle detail that other emulators have not captured is the slow-charging pixe
 
 
 \subsubsection{Local inhibition} 
-In mammalian retinas inhibitory circuits play an important role, some researchers have suggested that it reduces the number of spikes needed to represent what the eye is seeing\{ref\}. Our inhibition mechanism follows the same idea, since neighbouring pixels have similar values, we suppose that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX-like operation\{ref\} of pixel areas. An example is shown in Figure~\ref{fig:local_inh}, the maximum value (in green; 77) will generate a spike, while other values (in red; 0, 31, and 15) are blocked.
+In mammalian retinas inhibitory circuits play an important role, some researchers have suggested that it reduces the number of spikes needed to represent what the eye is seeing\textbf{\{ref\}}. Our inhibition mechanism follows the same idea, since neighbouring pixels have similar values, we suppose that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX operation (similar to complex cells in HMAX\textbf{\{ref\}} of pixel areas. An example is shown in Figure~\ref{fig:local_inh}, the maximum value (in green; 77) will generate a spike, while other values (in red; 0, 31, and 15) are blocked.
 
 \begin{figure}[htb]
 
@@ -196,11 +199,23 @@ Open source, and available in github.com\\
 Real-time DVS emulation on consumer hardware (Intel i5, 8GB ram)
 sPyNNaker wrapper for videos and images.
 
+\missingfigure{DVS vs EMUlator VISUAL comparison}
+
+\missingfigure{Regular vs Inhibited spikes}
+
+\missingfigure{History decay: Error in frame, recovery sequence}
+
+\missingfigure{Adaptive threshold: low changing pixels and how they could spike}
+
 \section{Conclusion}
 
-GPU computing version would allow for higher resolutions.
+Time encoded video/images removes the first barrier for research on the field.\\
 
-Working on ganglion cell/Difference of Gaussian encoding.
+Parsing images to spikes is useful to benchmark with other neural networks.\\
+
+GPU computing version would allow for higher resolutions.\\
+
+Ganglion cell/Difference of Gaussian encoding to provide proven rank-ordered spike trains.\\
 
 \printbibliography
 %\end{multicols}
