@@ -9,6 +9,9 @@
 \usepackage{graphicx}
 \graphicspath{{./pictures/}}
 
+\usepackage{caption}
+\usepackage{subcaption}
+
 \usepackage{amsmath}
 
 %\usepackage{multicol}
@@ -142,7 +145,29 @@ N_{H}^{now} = 2^{ \left\lfloor N_{b} - B \right\rfloor }
 
 For the \textit{full value} mode many spikes would be sent per pixel each frame, thus providing better resolution to the sent value, the downside to this is that an accumulation buffer is needed in addition to the previous spike time and value buffers. Decoding multiple spikes per frame has to be split in two cases: first if the new spike arrives before the current period is finished, then we accumulate its value to the current decoded value; otherwise we replace the contents of the accumulation buffer with the newly decoded value.
 
-\missingfigure{RATE vs TIME vs TIME-EXP spike trains}
+\begin{figure}[htb]
+  \captionsetup[subfigure]{justification=centering}
+  
+  \centering
+  \begin{subfigure}[b]{0.25\textwidth}
+    \includegraphics[width=\textwidth]{rate_code}
+    \caption{Rate coded spikes.\\ .}
+    \label{fig:rate_spikes}
+  \end{subfigure}~
+  \begin{subfigure}[b]{0.25\textwidth}
+    \includegraphics[width=\textwidth]{time_code}
+    \caption{Time coded\\spikes (linear).}
+    \label{fig:time_spikes}
+  \end{subfigure}\\
+  \begin{subfigure}[b]{0.25\textwidth}
+    \includegraphics[width=\textwidth]{exp_time_code}
+    \caption{Time coded spikes \\(exponential).}
+    \label{fig:time_exp_spikes}
+  \end{subfigure}
+  
+  \caption{Difference between spike encodings.}
+  \label{fig:spike_codes}
+\end{figure}
 
 \subsection{Additional behaviours}
 
@@ -201,7 +226,26 @@ sPyNNaker wrapper for videos and images.
 
 \missingfigure{DVS vs EMUlator VISUAL comparison}
 
-\missingfigure{Regular vs Inhibited spikes}
+\begin{figure}[htb]
+  \captionsetup[subfigure]{justification=centering}
+  \centering
+  \begin{subfigure}[b]{0.23\textwidth}
+    \includegraphics[width=\textwidth]{pre_inh_frame_262}
+    \caption{Raw spikes.}
+    \label{fig:pre_inh}
+  \end{subfigure}
+  ~
+  \begin{subfigure}[b]{0.23\textwidth}
+    \includegraphics[width=\textwidth]{post_inh_frame_262}
+    \caption{Inhibited spikes.}
+    \label{fig:post_inh}
+  \end{subfigure}
+
+
+  \caption{Difference between raw and local inhibited spikes.}
+  \label{fig:inh_diff}
+\end{figure}
+
 
 \missingfigure{History decay: Error in frame, recovery sequence}
 
