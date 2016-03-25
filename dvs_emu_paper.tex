@@ -1,6 +1,8 @@
 \documentclass[twocolumn]{article}
 \usepackage[utf8]{inputenc}
 
+\usepackage{hyperref}
+
 \usepackage{todonotes}
 
 \usepackage[backend=bibtex,style=ieee]{biblatex}
@@ -176,7 +178,7 @@ In this segment we describe modifications done to the basic DVS emulator, these 
 \begin{figure}[htb]
   
   \includegraphics[width=0.5\textwidth]{dvs_emu_decay_adapt_inh}
-  \caption{DVS emulation with adaptive thresholds.}
+  \caption{DVS emulation with adaptive thresholds, local inhibition and history decay.}
   \label{fig:dvs_emu_inh}
 \end{figure}
 
@@ -196,7 +198,7 @@ R_{now} = D\times R_{old} + N_{s}\times H
 %\end{figure}
 
 \subsubsection{Adaptive threshold} 
-A subtle detail that other emulators have not captured is the slow-charging pixels, cameras would capture these as similar values in each frame thus the difference would never be enough to generate a spike. Meanwhile in a real DVS pixels receiving light that is not enough to immediately trigger a spike gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold in a per-pixel basis, that is reduce it if a pixel did not create a spike. Since thresholds value may lowered, they also have to be increased if a spike was generated. This increment also adds a ``protection'' against fast changing pixels which could be the result of hardware malfunction or bring no information to the image. Figure~\ref{fig:dvs_emu_adapt} shows how threshold adaptation fits into the DVS emulator diagram.
+A subtle detail that other emulators have not captured is the slow-charging pixels, cameras would capture these as similar values in each frame thus the difference would never be enough to generate a spike. Meanwhile in a real DVS pixels receiving light that is not enough to immediately trigger a spike gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold in a per-pixel basis, that is reduce it if a pixel did not create a spike. Since thresholds value may lowered, they also have to be increased if a spike was generated. This increment also adds a ``protection'' against fast changing pixels which could be the result of hardware malfunction or bring no information to the image. 
 
 %\begin{figure}[htb]
 %
@@ -204,7 +206,11 @@ A subtle detail that other emulators have not captured is the slow-charging pixe
 %  \caption{DVS emulation with adaptive thresholds.}
 %  \label{fig:dvs_emu_adapt}
 %\end{figure}
-
+\begin{figure}
+  \includegraphics[width=0.45\textwidth]{adaptive_thresh}
+  \caption{Adaptive threshold behaviour.}
+  \label{fig:adpt_thresh}
+\end{figure}
 
 \subsubsection{Local inhibition} 
 In mammalian retinas inhibitory circuits play an important role, some researchers have suggested that it reduces the number of spikes needed to represent what the eye is seeing\textbf{\{ref\}}. Our inhibition mechanism follows the same idea, since neighbouring pixels have similar values, we suppose that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX operation (similar to complex cells in HMAX\textbf{\{ref\}} of pixel areas. An example is shown in Figure~\ref{fig:local_inh}, the maximum value (in green; 77) will generate a spike, while other values (in red; 0, 31, and 15) are blocked.
@@ -217,7 +223,7 @@ In mammalian retinas inhibitory circuits play an important role, some researcher
 \end{figure}
 
 
-Open source, and available in github.com\\
+Open source, and available at \url{https://github.com/chanokin/pyDVS}\\
 
 \section{Results}
 
@@ -242,14 +248,40 @@ sPyNNaker wrapper for videos and images.
   \end{subfigure}
 
 
-  \caption{Difference between raw and local inhibited spikes.}
+  \caption{Difference between raw and local inhibited spikes from a traversing image (inverted images).}
   \label{fig:inh_diff}
 \end{figure}
 
 
-\missingfigure{History decay: Error in frame, recovery sequence}
+\begin{figure}[htb]
+  \captionsetup[subfigure]{justification=centering}
+  \centering
+  \begin{subfigure}[b]{0.35\textwidth}
+    \includegraphics[width=\textwidth]{update_weight_0_95_error_20_img_10_bits_1_cycle_0}
+    \caption{Left to right emitter image, receiver's view, absolute difference, and generated spikes .}
+    \label{fig:hist_decay_pre}
+  \end{subfigure}\\
+  \begin{subfigure}[b]{0.35\textwidth}
+    \includegraphics[width=\textwidth]{update_weight_0_95_error_20_img_10_bits_1_cycle_1}
+    \caption{In the first transmission some spikes are lost, thus the receiver decodes a noisy image.}
+    \label{fig:hist_decay_first}
+  \end{subfigure}\\
+  \begin{subfigure}[b]{0.35\textwidth}
+    \includegraphics[width=\textwidth]{update_weight_0_95_error_20_img_10_bits_1_cycle_5}
+    \caption{After 5 cycles, the errors are mostly removed.}
+    \label{fig:hist_decay_fifth}
+  \end{subfigure}\\
+  \begin{subfigure}[b]{0.35\textwidth}
+    \includegraphics[width=\textwidth]{update_weight_0_95_error_20_img_10_bits_1_cycle_10}
+    \caption{Spikes are continuously generated due to reduced history weight.}
+    \label{fig:hist_decay_tenth}
+  \end{subfigure}\\
+  
+  
+  \caption{History decay helps to remove transmission errors (1 spike per pixel with exponential time encoding; inverted images).}
+  \label{fig:history_decay}
+\end{figure}
 
-\missingfigure{Adaptive threshold: low changing pixels and how they could spike}
 
 \section{Conclusion}
 
