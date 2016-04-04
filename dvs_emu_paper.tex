@@ -2,7 +2,12 @@
 \usepackage[utf8]{inputenc}
 
 \usepackage{hyperref}
-
+\hypersetup{
+  colorlinks   = true,
+  citecolor    = gray,
+  urlcolor     = blue,
+  linkcolor     = blue
+}
 \usepackage{todonotes}
 
 \usepackage[backend=bibtex,style=ieee]{biblatex}
@@ -15,6 +20,7 @@
 \usepackage{subcaption}
 
 \usepackage{amsmath}
+\usepackage{amssymb}
 
 %\usepackage{multicol}
 
@@ -56,7 +62,9 @@ In this work, we propose to emulate the behaviour of a DVS using a conventional 
 
 \section{Work}
 
-Pixels in DVSs are independent and transform light input into a logarithmic representation. Most commercial cameras produce gamma-encoded images~\cite{Poynton_digital_video} to better utilize bits and, in older days, to be compliant with cathode ray tube (CRT) monitors. Figure~\ref{fig:gamma_coding} shows the response for the encoding process (crosses), CRT monitors (hexagons) and decoding process (dots). Since the encoding response is similar to the logarithmic used in the DVS, we skip this step of the emulation.
+Pixels in DVSs are independent and transform light input into a logarithmic representation. Most commercial cameras produce gamma-encoded images~\cite{Poynton_digital_video} to better utilize bits and, in older days, to be compliant with cathode ray tube (CRT) monitors.
+% Figure~\ref{fig:gamma_coding} shows the response for the encoding process (crosses), CRT monitors (hexagons) and decoding process (dots). 
+Since the encoding response is similar to the logarithmic used in the DVS, we skip this step of the emulation.
 
 %\begin{figure}[htb]
 %  \includegraphics[width=0.5\textwidth]{gamma_coding}
@@ -184,7 +192,7 @@ In this segment we describe modifications done to the basic DVS emulator, these 
 
 \subsubsection{History decay} % - What if spikes get lost?}
 
-Initially we described a system where every spike that is sent will be captured on the receiver end, but this is not always the case. To cope with the latter cases, we now introduce a history decay mechanism which will allow the receiver to, in the long term, recover from missing spikes. Let $D = \{0, 1\}$ be the weight history has to calculate the new reference value, then the reference's update rule becomes
+Initially we described a system where every spike that is sent will be captured on the receiver end, but this is not always the case. To cope with the latter cases, we now introduce a history decay mechanism which will allow the receiver to, in the long term, recover from missing spikes. Let $D \in \mathbb{R} = \{0, 1\}$ be the weight history has to calculate the new reference value, then the reference's update rule becomes
 \begin{equation}
 \label{eq:ref_update_decay}
 R_{now} = D\times R_{old} + N_{s}\times H
@@ -194,7 +202,7 @@ R_{now} = D\times R_{old} + N_{s}\times H
 %  \includegraphics[width=0.5\textwidth]{dvs_emu_decay}
 %
 %  \caption{DVS emulation with history decay.}
-%  \label{fig:dvs_emu_decay}
+%%  \label{fig:dvs_emu_decay}
 %\end{figure}
 
 \subsubsection{Adaptive threshold} 
@@ -227,11 +235,12 @@ Open source, and available at \url{https://github.com/chanokin/pyDVS}\\
 
 \section{Results}
 
-Real-time DVS emulation on consumer hardware (Intel i5, 8GB ram)
-sPyNNaker wrapper for videos and images.
+The emulator was developed and tested in a desktop computer (Intel i5, 8GB ram) using the Python and Cython programming languages. We targeted a maximum $128\times 128$-pixel resolution, which can perform at a 60 fps. Lower resolutions (64, 32 and 16 pixel) are also available, and run at higher frame rates. The initial goal was to provide an alternative for computational neuroscientists that required visual input but could not afford a real DVS. To test the emulators compatibility with neuromorphic hardware, we created a PyNN-compatible~\cite{pynn} that communicates to the SpiNNaker platform~\cite{spinnaker_overview} over ethernet; it can natively encode videos and we provide a ``virtual camera'' that simulates movement on images so they can also be parsed. Using this component and the MNIST hand-written digits~\cite{mnist} we demonstrate the emulator behaviours; notice that most images in the tests are inverted (i.e. they originally where white over black and are now altered to black over white) to better capture the behaviour.
 
 \missingfigure{DVS vs EMUlator VISUAL comparison}
 
+
+The inhibitory behaviour will reduce the amount of spikes sent out while keeping some of the information needed to represent the visual input. Inhibition areas of $2\times 2$ and $4\times 4$ pixels were tested, Figure~\ref{fig:inh_diff} shows the difference of detecting and processing all pixels and inhibiting some. All the areas in Fig.~\ref{fig:pre_inh} are still represented in Fig.~\ref{fig:post_inh}, but with fewer spikes.
 \begin{figure}[htb]
   \captionsetup[subfigure]{justification=centering}
   \centering
@@ -253,6 +262,8 @@ sPyNNaker wrapper for videos and images.
 \end{figure}
 
 
+Although the majority of neuromorphic communications are fire-and-forget~\cite{Rast2015}, we were concerned that some information may be lost and so a history decay mechanism is included to cope with this problem. Figure~\ref{fig:hist_decay_pre} shows the first wave (rightmost image) of generated spikes if the leftmost image is presented. If some of the spikes are lost we don't obtain the whole picture on the receiver end (white pixels inside the five; second from left image). After 5 waves of spikes (Fig.~\ref{fig:hist_decay_fifth}), the difference between the images from both ends have $28\%$ non-zero pixels whose average value is 15; this means that the missing information was retransmitted due to history decay. Another effect of this mechanism is that the need to constantly move the image is no longer needed since the reference image's value tend to zero.
+
 \begin{figure}[htb]
   \captionsetup[subfigure]{justification=centering}
   \centering
@@ -268,14 +279,14 @@ sPyNNaker wrapper for videos and images.
   \end{subfigure}\\
   \begin{subfigure}[b]{0.35\textwidth}
     \includegraphics[width=\textwidth]{update_weight_0_95_error_20_img_10_bits_1_cycle_5}
-    \caption{After 5 cycles, the errors are mostly removed.}
+    \caption{After 5 cycles, the errors are mostly removed. Spikes are continuously generated due to history loss.}
     \label{fig:hist_decay_fifth}
-  \end{subfigure}\\
-  \begin{subfigure}[b]{0.35\textwidth}
-    \includegraphics[width=\textwidth]{update_weight_0_95_error_20_img_10_bits_1_cycle_10}
-    \caption{Spikes are continuously generated due to reduced history weight.}
-    \label{fig:hist_decay_tenth}
-  \end{subfigure}\\
+  \end{subfigure}%\\
+%  \begin{subfigure}[b]{0.35\textwidth}
+%    \includegraphics[width=\textwidth]{update_weight_0_95_error_20_img_10_bits_1_cycle_10}
+%    \caption{Spikes are continuously generated due to reduced history weight.}
+%    \label{fig:hist_decay_tenth}
+%  \end{subfigure}\\
   
   
   \caption{History decay helps to remove transmission errors (1 spike per pixel with exponential time encoding; inverted images).}
