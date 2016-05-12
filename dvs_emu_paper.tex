@@ -192,7 +192,7 @@ In this segment we describe modifications done to the basic DVS emulator, these 
 
 \subsubsection{History decay} % - What if spikes get lost?}
 
-Initially we described a system where every spike that is sent will be captured on the receiver end, but this is not always the case. To cope with the latter cases, we now introduce a history decay mechanism which will allow the receiver to, in the long term, recover from missing spikes. Let $D \in \mathbb{R} = \{0, 1\}$ be the weight history has to calculate the new reference value, then the reference's update rule becomes
+Initially we described a system where every spike that is sent will be captured on the receiver end, but this is not always the case. To cope with the latter cases, we now introduce a history decay mechanism which will allow the receiver to, in the long term, recover from missing spikes. Let $D \in \mathbb{R} = (0, 1]$ be the weight history has to calculate the new reference value, then the reference's update rule becomes
 \begin{equation}
 \label{eq:ref_update_decay}
 R_{now} = D\times R_{old} + N_{s}\times H
@@ -206,7 +206,7 @@ R_{now} = D\times R_{old} + N_{s}\times H
 %\end{figure}
 
 \subsubsection{Adaptive threshold} 
-A subtle detail that other emulators have not captured is the slow-charging pixels, cameras would capture these as similar values in each frame thus the difference would never be enough to generate a spike. Meanwhile in a real DVS pixels receiving light that is not enough to immediately trigger a spike gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold in a per-pixel basis, that is reduce it if a pixel did not create a spike. Since thresholds value may lowered, they also have to be increased if a spike was generated. This increment also adds a ``protection'' against fast changing pixels which could be the result of hardware malfunction or bring no information to the image. 
+A subtle detail that other emulators have not captured is the slow-charging pixels, cameras would capture these as similar values in each frame thus the difference would never be enough to generate a spike. Meanwhile in a real DVS pixels receiving light that is not enough to immediately trigger a spike gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold in a per-pixel basis, that is reduce it if a pixel did not create a spike. Since thresholds value may lowered, they also have to be increased if a spike was generated. These changes in the threshold effectively add a low-pass filter to the system. 
 
 %\begin{figure}[htb]
 %
@@ -231,11 +231,11 @@ In mammalian retinas inhibitory circuits play an important role, some researcher
 \end{figure}
 
 
-Open source, and available at \url{https://github.com/chanokin/pyDVS}\\
-
 \section{Results}
 
-The emulator was developed and tested in a desktop computer (Intel i5, 8GB ram) using the Python and Cython programming languages. We targeted a maximum $128\times 128$-pixel resolution, which can perform at a 60 fps. Lower resolutions (64, 32 and 16 pixel) are also available, and run at higher frame rates. The initial goal was to provide an alternative for computational neuroscientists that required visual input but could not afford a real DVS. To test the emulators compatibility with neuromorphic hardware, we created a PyNN-compatible~\cite{pynn} that communicates to the SpiNNaker platform~\cite{spinnaker_overview} over ethernet; it can natively encode videos and we provide a ``virtual camera'' that simulates movement on images so they can also be parsed. Using this component and the MNIST hand-written digits~\cite{mnist} we demonstrate the emulator behaviours; notice that most images in the tests are inverted (i.e. they originally where white over black and are now altered to black over white) to better capture the behaviour.
+The emulator was developed and tested in a desktop computer (Intel i5, 8GB ram) using the Python and Cython programming languages. We targeted a maximum $128\times 128$-pixel resolution, which can perform at a 60 fps. Lower resolutions (64, 32 and 16 pixel) are also available, and run at higher frame rates. This project is open source and it's available at \url{https://github.com/chanokin/pyDVS}.
+
+The initial goal was to provide an alternative for computational neuroscientists that required visual input but could not afford a real DVS. To test the emulators compatibility with neuromorphic hardware, we created a PyNN-compatible~\cite{pynn} that communicates to the SpiNNaker platform~\cite{spinnaker_overview} over ethernet; it can natively encode videos and we provide a ``virtual camera'' that simulates movement on images so they can also be parsed. Using this component and the MNIST hand-written digits~\cite{mnist} we demonstrate the emulator behaviours; notice that most images in the tests are inverted (i.e. they originally where white over black and are now altered to black over white) to better capture the behaviour.
 
 \missingfigure{DVS vs EMUlator VISUAL comparison}
 
@@ -296,13 +296,13 @@ Although the majority of neuromorphic communications are fire-and-forget~\cite{R
 
 \section{Conclusion}
 
-Time encoded video/images removes the first barrier for research on the field.\\
+An important part of research on computer vision has lead to image and video databases. In order to utilize them in spiking neural networks without pointing a real DVS to a monitor, we developed the emulator presented here. Utilising well known datasets, allows an easier comparison between spiking and traditional neural networks.
 
-Parsing images to spikes is useful to benchmark with other neural networks.\\
+Emulating a DVS provides the flexibility to modify the system's behaviour in software. One of such changes is to utilize time-encoded spikes, which could open the door to this open research field.
 
-GPU computing version would allow for higher resolutions.\\
+While the resolutions in the current version of the emulator are low, we've developed an OpenCL version. By using the parallel processing nature of Graphics Processing Units it was possible to encode images at higher resolutions\footnote{We tested up to 1080p video at 30 fps}; the main problem with this large imagery is that serializing and transmitting such quantities of spikes has proven a hard task.
 
-Ganglion cell/Difference of Gaussian encoding to provide proven rank-ordered spike trains.\\
+Research on encoding spikes using convolution kernels is ongoing. We've explored using a kernel based on Carver Mead's original silicon retina connectivity and biologically inspired difference of Gaussian kernels. These types of encoding could prove to be more efficient as a single spike would represent a region of the image instead of a single pixel.
 
 \printbibliography
 %\end{multicols}
