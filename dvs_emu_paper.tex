@@ -224,12 +224,12 @@ A subtle detail that other emulators have not captured is the slow-charging pixe
 In mammalian retinas inhibitory circuits play an important role, some researchers have suggested that it reduces the number of spikes needed to represent what the eye is seeing\textbf{\{ref\}}. Our inhibition mechanism follows the same idea, since neighbouring pixels have similar values, we suppose that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX operation (similar to complex cells in HMAX\textbf{\{ref\}} of pixel areas. An example is shown in Figure~\ref{fig:local_inh}, the maximum value (in green; 77) will generate a spike, while other values (in red; 0, 31, and 15) are blocked.
 
 \begin{figure}[htb]
-
-  \includegraphics[width=0.5\textwidth]{inh_local_max}
-  \caption{Local inhibition mechanism, quantities represent the absolute value of the difference between an image and reference.}
+\begin{center}
+    \includegraphics[width=0.3\textwidth]{inh_local_max}
+    \caption{Local inhibition mechanism, quantities represent the absolute value of the difference between an image and reference.}
+\end{center}
   \label{fig:local_inh}
 \end{figure}
-
 
 \section{Results}
 
