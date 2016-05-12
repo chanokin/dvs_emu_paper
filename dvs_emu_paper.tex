@@ -136,7 +136,7 @@ To overcome the limitation on maximum encoded values  we propose \textit{binary 
   \label{fig:exponential_time}
 \end{figure} 
 
-In the \textit{shoot-and-refine} mode, a single spike is sent with an over- or underestimate of the desired value (e.g. the next power of two), and in the following frames we send at most one spike to refine the received value towards the desired one (similar to sar adc \textbf{\{ref\}}). Decoding can be done in a similar way as the linear case, but we divide the available time in $N_{b}$ bins of width is $W_{b} = T/N_{b}$. Now to compute the time difference
+In the \textit{shoot-and-refine} mode, a single spike is sent with an over- or underestimate of the desired value (e.g. the next power of two), and in the following frames we send at most one spike to refine the received value towards the desired one. Decoding can be done in a similar way as the linear case, but we divide the available time in $N_{b}$ bins of width is $W_{b} = T/N_{b}$. Now to compute the time difference
 \begin{equation}
 \Delta t = t_{now} - \left( t_{last} - 2*\left[N_{b} - log_{2}(N_{H}^{last})W_{b} + 1\right] \right)
 \label{eq:time_diff_exp}
@@ -215,19 +215,20 @@ A subtle detail that other emulators have not captured is the slow-charging pixe
 %  \label{fig:dvs_emu_adapt}
 %\end{figure}
 \begin{figure}
-  \includegraphics[width=0.45\textwidth]{adaptive_thresh}
+  \centering
+  \includegraphics[width=0.3\textwidth]{adaptive_thresh}
   \caption{Adaptive threshold behaviour.}
   \label{fig:adpt_thresh}
 \end{figure}
 
 \subsubsection{Local inhibition} 
-In mammalian retinas inhibitory circuits play an important role, some researchers have suggested that it reduces the number of spikes needed to represent what the eye is seeing\textbf{\{ref\}}. Our inhibition mechanism follows the same idea, since neighbouring pixels have similar values, we suppose that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX operation (similar to complex cells in HMAX\textbf{\{ref\}} of pixel areas. An example is shown in Figure~\ref{fig:local_inh}, the maximum value (in green; 77) will generate a spike, while other values (in red; 0, 31, and 15) are blocked.
+In mammalian retinas inhibitory circuits play an important role, some researchers have suggested that it reduces the number of spikes needed to represent what the eye is sensing~\cite{basab}. Our emulator's inhibition mechanism follows the same idea, since neighbouring pixels have similar values, we suppose that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX operation (similar to complex cells in the HMAX model~\cite{riesenhuber1999hierarchical}) of pixel areas. An example is shown in Figure~\ref{fig:local_inh}, the maximum value (in green; 77) will generate a spike, while other values (in red; 0, 31, and 15) are blocked.
 
 \begin{figure}[htb]
-\begin{center}
+\centering
     \includegraphics[width=0.3\textwidth]{inh_local_max}
     \caption{Local inhibition mechanism, quantities represent the absolute value of the difference between an image and reference.}
-\end{center}
+
   \label{fig:local_inh}
 \end{figure}
 
