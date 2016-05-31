@@ -276,34 +276,14 @@ The inhibitory behaviour will reduce the amount of spikes that the emulator prod
 \footnotetext{Notice that most images in the tests are shown inverted. They originally where white over black and are now altered to black over white to better capture the behaviour}
 %%%%%%%%%%%%%%
 
-Although the majority of neuromorphic communications are fire-and-forget~\cite{Rast2015}, we were concerned that some information may be lost and so a history decay mechanism is included to cope with this problem. Figure~\ref{fig:hist_decay_pre} shows the first wave (rightmost image) of generated spikes if the leftmost image is presented. If some of the spikes are lost we don't obtain the whole picture on the receiver end (white pixels inside the five; second from left image, Fig~\ref{fig:hist_decay_first}). After 5 waves of spikes (Fig.~\ref{fig:hist_decay_fifth}), the difference between the images from both ends have $28\%$ non-zero pixels whose average value is 15; this means that the missing information was retransmitted due to history decay. Another effect of this mechanism is that the need to constantly move the image is no longer needed since the reference image's value tend to zero.
+Although the majority of neuromorphic communications are fire-and-forget~\cite{Rast2015}, we were concerned that some information may be lost during transmission and so a history decay mechanism is included to cope with this problem. An example of how both sides of the transmission line can recover from a loss of spikes is shown in Figure~\ref{fig:history_decay}; of particular interest are the $sender$ and $receiver$ rows, which show what both ends ``see''. The leftmost column illustrates how the system starts and what spikes are going to be sent. If some of the spikes are lost (second column) we cannot reconstruct the picture correctly on the receiver end. After 40 waves of spikes (rightmost column), the absolute difference ($|send-recv|$ row) between the images from both ends has pixels whose average value is 8; this means that the missing information has been retransmitted due to history decay. Another effect of this mechanism is that the need to constantly move the image is no longer needed since the reference image's value tend to zero.
 
 \begin{figure}[htb]
-  \captionsetup[subfigure]{justification=centering}
+%  \captionsetup[subfigure]{justification=centering}
   \centering
-  \begin{subfigure}[b]{0.35\textwidth}
-    \includegraphics[width=\textwidth]{update_weight_0_95_error_20_img_10_bits_1_cycle_0}
-    \caption{Left to right emitter image, receiver's view, absolute difference, and generated spikes .}
-    \label{fig:hist_decay_pre}
-  \end{subfigure}\\
-  \begin{subfigure}[b]{0.35\textwidth}
-    \includegraphics[width=\textwidth]{update_weight_0_95_error_20_img_10_bits_1_cycle_1}
-    \caption{In the first transmission some spikes are lost, thus the receiver decodes a noisy image.}
-    \label{fig:hist_decay_first}
-  \end{subfigure}\\
-  \begin{subfigure}[b]{0.35\textwidth}
-    \includegraphics[width=\textwidth]{update_weight_0_95_error_20_img_10_bits_1_cycle_5}
-    \caption{After 5 cycles, the errors are mostly removed. Spikes are continuously generated due to history loss.}
-    \label{fig:hist_decay_fifth}
-  \end{subfigure}%\\
-%  \begin{subfigure}[b]{0.35\textwidth}
-%    \includegraphics[width=\textwidth]{update_weight_0_95_error_20_img_10_bits_1_cycle_10}
-%    \caption{Spikes are continuously generated due to reduced history weight.}
-%    \label{fig:hist_decay_tenth}
-%  \end{subfigure}\\
   
-  
-  \caption{History decay helps to remove transmission errors (1 spike per pixel with exponential time encoding; inverted images).}
+  \includegraphics[width=0.45\textwidth]{history_decay}
+  \caption{History decay helps to remove transmission errors (1 spike per pixel with linear time encoding).}
   \label{fig:history_decay}
 \end{figure}
 
