@@ -95,7 +95,7 @@ Figure~\ref{fig:dvs_emu} shows the basic DVS emulation diagram, first asynchrono
 
 \subsection{Output modes}
 \subsubsection{Rate-based}
-As in previous emulators\cite{dvs_emu}, the standard output format is rate-based. To calculate the number of spikes that represents a change in brightness we use the following expression
+As in previous emulators~\cite{dvs_emu}, the standard output format is rate-based. To calculate the number of spikes that represents a change in brightness we use the following expression
 \begin{equation}
   \label{eq:num_spikes_rate}
   N_{H} = \left\lfloor \mathrm{min}\left( T, \;\; \frac{\Delta B}{H} \right) \right\rfloor
@@ -114,8 +114,19 @@ First we propose to linearly encode the number of thresholds exceeded. To do thi
 Figure~\ref{fig:linear_time} shows the value-to-spike-time relation, in our proposal earlier spikes represent larger changes in intensity. The main advantage of this encoding is that a single spike could represent multiple rate-based spikes, though the encoded values are limited by time resolution and the frame rate of the camera.
 
 \begin{figure}[htb]
-  \includegraphics[width=0.5\textwidth]{spike_values_linear}
-
+  \centering
+      
+    \begin{subfigure}[b]{0.35\textwidth}
+      \includegraphics[width=\textwidth]{spike_values_linear}
+      \caption{Possible values after a spike has been received.}
+      \label{fig:linear_time_all}
+    \end{subfigure}
+    
+    \begin{subfigure}[b]{0.35\textwidth}
+      \includegraphics[width=\textwidth]{new_val_calc_linear}
+      \caption{Time differences between current and previous spikes.}
+      \label{fig:linear_time_calc}
+    \end{subfigure}
   \caption{Linear time-based encoding of thresholds ($H$) exceeded}
   \label{fig:linear_time}
 \end{figure} 
@@ -123,7 +134,7 @@ Figure~\ref{fig:linear_time} shows the value-to-spike-time relation, in our prop
 To decode the spikes on the receiver end, we must keep track of the time and value from the last collected spiked. Let $\Delta t$ be the difference in arrival time between the previous and current spike~(Eq. \ref{eq:time_diff})
 
 \begin{equation}
-\Delta t = t_{now} - \left( t_{last} - \left[N_{b} - N_{H}^{last}W_{b} \right] \right)
+\Delta t = t_{now} - \left( t_{last} - \left[N_{b} - N_{H}^{last}\right]W_{b}  \right)
 \label{eq:time_diff}
 \end{equation}
 where the subtraction of $N_{b} - N_{H}^{last}W_{b}$ sets the time reference to a multiple of time period $T$. We now divide the time difference by the time-bin width to obtain the current bin
@@ -141,7 +152,7 @@ here, `$\mathrm{mod}$' calculates its arguments division remainder. Now that the
 To mitigate the limitation on maximum encoded values  we propose \textit{binary encoding} of the number of thresholds exceeded. The main advantage of this technique would be to achieve large values with fewer time bins as the growth is exponential (Fig. \ref{fig:exponential_time}). We propose to use this encoding in two ways: \textit{shoot-and-refine} and \textit{full value}. 
 
 \begin{figure}[htb]
-  \includegraphics[width=0.5\textwidth]{spike_values_exp}
+  \includegraphics[width=0.45\textwidth]{spike_values_exp}
 
   \caption{Exponential time-based encoding of thresholds ($H$) exceeded}
   \label{fig:exponential_time}
@@ -155,7 +166,7 @@ In the \textit{shoot-and-refine} mode, a single spike is sent with an over- or u
 
 Since we are using time bins that are larger than the system's time resolution, the term $N_{b} - N_{H}^{last}W_{b}$ of Eq.~\ref{eq:time_diff} is transformed into
 \begin{equation}
- 2*\left[N_{b} - log_{2}(N_{H}^{last})W_{b} + 1\right]
+ 2*\left[N_{b} - log_{2}(N_{H}^{last})\right]W_{b} + 1
 \end{equation}
 
 The correct bin is calculated using Eq.~\ref{eq:bin_compute} as in the linear case; finally for the decoded value
@@ -171,17 +182,17 @@ For the \textit{full value} mode many spikes would be sent per pixel each frame,
   
   \centering
   \begin{subfigure}[b]{0.25\textwidth}
-    \includegraphics[width=\textwidth]{rate_code}
+    \includegraphics[width=\textwidth]{rate_coded_-8x8-_cycle_0}
     \caption{Rate coded spikes.\\ .}
     \label{fig:rate_spikes}
   \end{subfigure}~
   \begin{subfigure}[b]{0.25\textwidth}
-    \includegraphics[width=\textwidth]{time_code}
+    \includegraphics[width=\textwidth]{time_coded_-8x8-_cycle_0}
     \caption{Time coded\\spikes (linear).}
     \label{fig:time_spikes}
   \end{subfigure}\\
   \begin{subfigure}[b]{0.25\textwidth}
-    \includegraphics[width=\textwidth]{exp_time_code}
+    \includegraphics[width=\textwidth]{time_exp_coded_-8x8-_cycle_0}
     \caption{Time coded spikes \\(exponential).}
     \label{fig:time_exp_spikes}
   \end{subfigure}
@@ -217,7 +228,7 @@ R_{now} = D\cdot R_{last} + N_{H}\cdot H
 %\end{figure}
 
 \subsubsection{Adaptive threshold} 
-A subtle detail that other emulators have not captured is the slow-changing pixels, cameras would capture these as similar values in each frame thus the difference would never be enough to generate a spike. Meanwhile in a real DVS pixels receiving insufficient light to immediately trigger a spike, still gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold in a per-pixel basis, that is reduce it if a pixel did not create a spike. Since thresholds value may lowered, they also have to be increased if a spike was generated. These changes in the threshold effectively add a low-pass filter to the system. 
+A subtle detail that other emulators have not captured is the slow-changing pixels, cameras would capture these as similar values in each frame thus the difference would never be enough to generate a spike. Meanwhile in a real DVS pixels receiving insufficient light to immediately trigger a spike, still gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold in a per-pixel basis, that is reduce it if a pixel did not create a spike. Since thresholds value may lowered, they also have to be increased if a spike was generated. These changes in the threshold effectively adds a low-pass filter to the system. 
 
 %\begin{figure}[htb]
 %
@@ -227,7 +238,7 @@ A subtle detail that other emulators have not captured is the slow-changing pixe
 %\end{figure}
 \begin{figure}
   \centering
-  \includegraphics[width=0.3\textwidth]{adaptive_thresh}
+  \includegraphics[width=0.45\textwidth]{adaptive_thresh_boxes}
   \caption{Adaptive threshold behaviour.}
   \label{fig:adpt_thresh}
 \end{figure}
@@ -257,23 +268,23 @@ The inhibitory behaviour will reduce the amount of spikes that the emulator prod
 \begin{figure}[htb]
   \captionsetup[subfigure]{justification=centering}
   \centering
-  \begin{subfigure}[b]{0.23\textwidth}
+  \begin{subfigure}[b]{0.2\textwidth}
     \includegraphics[width=\textwidth]{pre_inh_frame_262}
     \caption{Raw spikes.}
     \label{fig:pre_inh}
   \end{subfigure}
   ~
-  \begin{subfigure}[b]{0.23\textwidth}
+  \begin{subfigure}[b]{0.2\textwidth}
     \includegraphics[width=\textwidth]{post_inh_frame_262}
     \caption{Inhibited spikes.}
     \label{fig:post_inh}
   \end{subfigure}
 
-  \caption[Difference between raw and local inhibited spikes from a traversing image (inverted images).]{Difference between raw and local inhibited spikes from a traversing image (inverted images\footnotemark ).}
+  \caption[Difference between raw and local inhibited spikes from a traversing image (inverted images).]{Difference between raw and local inhibited spikes from a traversing image.}
   \label{fig:inh_diff}
 \end{figure}
 %%%%%%%%%%%%%%
-\footnotetext{Notice that most images in the tests are shown inverted. They originally where white over black and are now altered to black over white to better capture the behaviour}
+%\footnotetext{Notice that most images in the tests are shown inverted. They originally where white over black and are now altered to black over white to better capture the behaviour}
 %%%%%%%%%%%%%%
 
 Although the majority of neuromorphic communications are fire-and-forget~\cite{Rast2015}, we were concerned that some information may be lost during transmission and so a history decay mechanism is included to cope with this problem. An example of how both sides of the transmission line can recover from a loss of spikes is shown in Figure~\ref{fig:history_decay}; of particular interest are the $sender$ and $receiver$ rows, which show what both ends ``see''. The leftmost column illustrates how the system starts and what spikes are going to be sent. If some of the spikes are lost (second column) we cannot reconstruct the picture correctly on the receiver end. After 40 waves of spikes (rightmost column), the absolute difference ($|send-recv|$ row) between the images from both ends has pixels whose average value is 8; this means that the missing information has been retransmitted due to history decay. Another effect of this mechanism is that the need to constantly move the image is no longer needed since the reference image's value tend to zero.
