@@ -126,7 +126,7 @@ Since this encoding's response is similar to the logarithmic one used in a real 
   \label{fig:dvs_emu}
 \end{figure}
 
-Figure~\ref{fig:dvs_emu} shows the basic DVS emulation diagram, we obtain an image (\textsf{IMG}) from a video source and perform a difference with the reference frame (\textsf{REF}). We then apply a threshold filter to the difference frame (\textsf{DIFF}), the resulting pixels are considered \textit{raw spikes} (\textsf{SPKS}$\mathsf{_R}$). We can optionally post-process these pixels, as we'll demonstrate in Section~\ref{sec:additional-behaviours}, but we must encode them (Sec.~\ref{sec:output-modes}) so that they can be emitted as events (\textsf{SPKS}$\mathsf{_E}$). Finally, depending on the selected type of output encoding, we simulate a receiver and update the reference frame accordingly. 
+Figure~\ref{fig:dvs_emu} shows the basic DVS emulation diagram, we obtain an image (\textsf{IMG}) from a video source and subtract from it a reference frame (\textsf{REF}). We then apply a threshold filter to the difference frame (\textsf{DIFF}), the remaining pixels are considered \textit{raw spikes} (\textsf{SPKS}$\mathsf{_R}$). We can optionally post-process these pixels, as we'll demonstrate in Section~\ref{sec:additional-behaviours}, but we must encode them (Sec.~\ref{sec:output-modes}) so that they can be emitted as events (\textsf{SPKS}$\mathsf{_E}$). Finally, depending on the selected type of output encoding, we simulate a receiver and update the reference frame accordingly. 
 
 
 %\subsection{Output modes}
@@ -139,7 +139,7 @@ As in previous emulators~\cite{DVSemu}, the standard output format is rate-based
   \label{eq:num_spikes_rate}
   N_{H} = \left\lfloor \mathrm{min}\left( T, \;\; \frac{\Delta B}{H} \right) \right\rfloor
 \end{equation}
-where, in this encoding, $N_{H}$ is the number of spikes needed to represent the change in brightness $\Delta B$ in terms of the threshold $H$. Notice that the maximum time ($T$) to transmit all the spikes for one frame is bound by the frame rate of the camera~$(fps)$. If the time resolution of spike events is one millisecond, then $T = 1000/fps$. At this stage we model a perfect receiver, so the update rule for the reference is
+where, in this encoding, $N_{H}$ is the number of spikes needed to represent the change in brightness $\Delta B$ in terms of the threshold $H$. Notice that the maximum time ($T$) to transmit all the spikes for one frame is bound by the frame rate of the camera~$(r)$. If the time resolution of spike events is one millisecond, then $T = 1000/r$. At this stage we model a perfect receiver, so the update rule for the reference is
 \begin{equation}
   \label{eq:ref_update}
   R_{now} = R_{last} + N_{H}\cdot H
