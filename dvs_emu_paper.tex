@@ -78,11 +78,11 @@
 %[
 \begin{abstract}
 %\textsf{
-Vision is one of our most important senses, a vast amount of information is perceived through our eyes. Neuroscientists have performed many studies using vision as input to their experiments. Computational neuroscientists have typically used a brightness-to-rate encoding to use images as spike-based visual sources. Recently neuromorphic Dynamic Vision Sensors (DVSs) have surfaced and, while they have excellent capabilities, they remain scarce and relatively expensive.
+Vision is one of our most important senses, a vast amount of information is perceived through our eyes. Neuroscientists have performed many studies using vision as input to their experiments. Computational neuroscientists have typically used a brightness-to-rate encoding to use images as spike-based visual sources for it's natural mapping. Recently, neuromorphic Dynamic Vision Sensors (DVSs) were developed and, while they have excellent capabilities, they remain scarce and relatively expensive.
 %}
 
 %\textsf{
-We propose a visual input system inspired by the behaviour of a DVS, but using a conventional digital camera as a sensor and a PC as the processing element. By using readily-available components, we believe most scientists would have access to a realistic spiking visual input source. While our primary goal was to provide systems with a real-time input, we have also been successful in transcoding well established image and video databases into spike train representations. Our main contribution is a DVS emulator which we've extended by adding  locally inhibitory behaviour, adaptive thresholds and time-based encoding of the output spikes.
+We propose a visual input system inspired by the behaviour of a DVS but using a conventional digital camera as a sensor and a PC to encode the images. By using readily-available components, we believe most scientists would have access to a realistic spiking visual input source. While our primary goal is to provide systems with a real-time input, we have also been successful in transcoding well established image and video databases into spike train representations. Our main contribution is a DVS emulator extended by adding  local inhibitory behaviour, adaptive thresholds and time-based encoding of the output spikes.
 %}
 
 \end{abstract}
@@ -93,24 +93,25 @@ We propose a visual input system inspired by the behaviour of a DVS, but using a
 
 In recent years the rate of increase of computer processors' performance has been slow; this is mainly because manufacturing technologies are reaching their physical limits. One way to improve performance is to use many processors in parallel, which has been successfully applied to parallel-friendly applications such as computer graphics. Meanwhile tasks such as pattern recognition remain difficult for computers, even with these technological advances.
 
-Our brains are particularly good at learning and recognizing visual patterns (e.g. letters, dogs, houses, etc.). In order to achieve better performance for similar tasks on computers, scientists have looked into biology for inspiration. This has lead to the rise of brain-like (neuromorphic) hardware, which mimics functional aspects of the nervous system. We can divide neuromorphic hardware into sensors (providing input), computing devices (which make use of information from sensors) and actuators (that control devices). Visual input has been traditionally obtained from images that are rate-encoded using Poisson processes. While this might be a biologically-plausible encoding in the first phase of a ``visual pipeline'', it is unlikely that retinas transmit as many spikes into later stages. Furthermore, if we think in terms of digital networks, having each pixel represented by a Poisson process could incur high bandwidth requirements. 
+Our brains are particularly good at learning and recognizing visual patterns (e.g. letters, dogs, houses, etc.). To achieve better performance for similar tasks on computers, scientists have looked to biology for inspiration. This has led to the rise of brain-like (neuromorphic) hardware, which mimics functional aspects of the nervous system. We can divide neuromorphic hardware into sensors (providing input), computing devices (which make use of information from sensors) and actuators (which control devices). Traditionally visual input has been obtained from images that are rate-encoded, that is every pixel represents a neuron emits a number of spikes proportional to its brightness, usually via a Poisson process~\cite{snyder2012random}. While this might be a biologically-plausible encoding in the first phase of a ``visual pipeline'', it is unlikely that retinas transmit as many spikes into later stages. Furthermore, if we think in terms of digital networks, having each pixel represented by a Poisson process could incur high bandwidth requirements. 
 
-In \citeyear{Mead1989}, \citeauthor{Mead1989} proposed a silicon retina consisting of individual photoreceptors and a resistor mesh that allowed nearby receptors to influence the output of a pixel~\cite{Mead1989}. 
-Later, researchers developed frame-free Dynamic Vision Sensors (DVSs)~\cite{delbruckDVS,bernabeDVS}. They feature independent pixels that emit a signal when their log-intensity values change above a certain threshold. These sensors have micro-second response time and excellent dynamic range properties, although they are still not as widely available as conventional cameras.
+In \citeyear{Mead1989}, \citeauthor{Mead1989} proposed a silicon retina consisting of individual photoreceptors and a resistor mesh which allowed nearby receptors to influence the output of a pixel~\cite{Mead1989}. 
+Later, researchers developed frame-free Dynamic Vision Sensors (DVSs)~\cite{delbruckDVS,bernabeDVS}. These feature independent pixels which emit a signal when their log-intensity values change by a certain threshold.
+These sensors have microsecond response time, excellent dynamic range properties and frame-free output, although they are still not as widely available as conventional cameras.
 
-\citeauthor{DVSemu} developed a DVS emulator in order to test behaviours for new sensor models~\cite{DVSemu}. In their work, they transform the image provided by a commercial camera into a spike stream [at 125 frames per second (FPS)]. In simple terms, the emulation is done by differencing video input with a reference frame; if this difference is larger than a threshold it produces an output and updates the reference. The number of spikes produced per pixel are proportional to the difference-to-threshold ratio. This emulator has been merged into their jAER project, a Java-based Address-Event Representation software framework that specializes in processing DVS output in real time.
+\citeauthor{DVSemu} developed a DVS emulator in order to test behaviours for new sensor models~\cite{DVSemu}. In their work, they transform the image provided by a commercial camera into a spike stream [at 125 frames per second (FPS)]. In simple terms, the emulation is done by differencing video input with a reference frame; if this difference is larger than a threshold it produces an output and updates the reference. The number of spikes produced per pixel are proportional to the difference-to-threshold ratio. This emulator has been merged into their jAER project~\cite{delbruck2008frame}, a Java-based Address-Event Representation software framework that specializes in processing DVS output in real time.
 
-In this work, we propose to emulate the behaviour of a DVS using a conventional digital camera as a sensor. Basing the emulator on widely available hardware, allows computational neuroscientists to include video as a spike-encoded input. We present our basic emulator in Section~\ref{sec:basic-emulator}. In Section~\ref{sec:output-modes} we describe the spike encodings provided, Section~\ref{sec:additional-behaviours} discuses processing blocks that we've added to the basic emulator. Results are given in Section~\ref{sec:results}; conclusions and suggestions for future work are given in Sections~\ref{sec:conclusions} and~\ref{sec:future-work}, respectively.
+In this work, we present a behavioural emulator of a DVS using a conventional digital camera as a sensor. Basing the emulator on widely available hardware allows computational neuroscientists to include video as a spike-encoded input without a DVS. We present our basic emulator in Section~\ref{sec:basic-emulator}. In Section~\ref{sec:output-modes} we describe the spike encodings provided, Section~\ref{sec:additional-behaviours} discusses processing blocks added to the basic emulator. Results are given in Section~\ref{sec:results}; conclusions and suggestions for future work are given in Sections~\ref{sec:conclusions} and~\ref{sec:future-work}, respectively.
 
 
 \section{The emulator}
 \label{sec:basic-emulator}
 
-Our emulator works by analysing the difference of the latest frame captured from the camera and a reference frame. If a pixel changes more than a certain threshold, then we generate an event which contains the pixel's coordinates and whether the change was positive or negative. 
+Our emulator works by analysing the difference of the latest frame captured from the camera and a reference frame. If a pixel changes by more than a certain threshold, then we generate an event which contains the pixel's coordinates and whether the change was positive or negative. 
 
-Pixels in real DVSs have a logarithmic response to light intensity, similarly most commercial cameras produce gamma-encoded images~\cite{PoyntonDigitalVideo} for better bit utilization and, in the past, to be compliant with cathode ray tube (CRT) monitors.
+Pixels in DVSs have a logarithmic response to light intensity, similarly most commercial cameras produce gamma-encoded images~\cite{PoyntonDigitalVideo} for better bit utilization and, in the past, to be compliant with cathode ray tube (CRT) monitors.
 % Figure~\ref{fig:gamma_coding} shows the response for the encoding process (crosses), CRT monitors (hexagons) and decoding process (dots). 
-Since this encoding's response is similar to the logarithmic one used in a real DVS, we skip this step of the emulation.
+Since this encoding's response is similar to the logarithmic one used in a real DVS, we skip this step.
 
 %\begin{figure}[htb]
 %  \includegraphics[width=0.5\textwidth]{gamma_coding}
@@ -121,7 +122,7 @@ Since this encoding's response is similar to the logarithmic one used in a real 
 \begin{figure}[htb]
   \includegraphics[width=0.5\textwidth]{dvs_emu}
   
-  \caption{DVS emulation diagram. Circles indicate operations and rectangles stages of visual information (from frames to spike trains)}
+  \caption{DVS emulation diagram. Circles indicate operations and rectangles stages of visual information (from frames to spike trains).}
   \label{fig:dvs_emu}
 \end{figure}
 
