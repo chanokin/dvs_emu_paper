@@ -133,9 +133,9 @@ Figure~\ref{fig:dvs_emu} shows the basic DVS emulation diagram, we obtain an ima
 \section{Output encoding}
 \label{sec:output-modes}
 %\subsubsection{Rate-based}
-In conventional video cameras pixels capture light to form an image and repeat this process in a regular time interval ($T$), these images are usually called frames. To emulate a frame-free system, we convert pixel's brightness into events. Since we are developing a real-time system, all events should be emitted between frames. For example, if time interval $T = 10 ms$ and neurons (representing pixels) fire once per millisecond, then they can emit at most $10$ spikes.
+In conventional video cameras pixels capture light to form an image and repeat this process in a regular time interval ($T$), these images are usually called frames. To emulate a frame-free system, we convert pixel's brightness into events. Since we are developing a real-time system, all events should be emitted between frames. For example, if the discrete time interval $T = 10 ms$ and neurons (representing pixels) fire once per millisecond, then they can emit at most $10$ spikes.
 \subsection{Rate-based}
-As in previous emulators~\cite{DVSemu}, the standard output format is rate-based. Each emitted spike signifies the pixel changed by $H$ brightness levels, where $H$ is also the threshold. Let $N_{H}$ be the integer division of a pixel's brightness change $\Delta B$ by the threshold $H$ and remembering the limit imposed by $T$, the number of spikes ($N_{s}$) needed to represent $\Delta B$ will be
+As in previous emulators~\cite{DVSemu}, the standard output format is rate-based. Each emitted spike signifies the pixel changed by $H$ brightness levels, where $H$ is also the threshold. Let $N_{H}$ be the integer division of a pixel's brightness change $\Delta B$ by the threshold $H$ and limiting by $T$, the number of spikes ($N_{s}$) needed to represent $\Delta B$ will be
 \begin{equation}
   \label{eq:num_spikes_rate}
   N_{s} = \mathrm{min}\left( T, \;\; N_{H} \right) = \mathrm{min}\left( T, \;\; \left\lfloor\frac{\Delta B}{H}\right\rfloor \right)
@@ -150,13 +150,17 @@ At this stage we model a perfect receiver, so the update rule for the reference 
 \subsection{Time-based}
 In its worst case rate-based encoding can send a spike per millisecond per pixel, which is not biologically plausible and can potentially saturate communication channels. One way to prevent this is to encode the brightness difference in the time a spike is emitted. Furthermore, \citeauthor{Delorme2001795} used time-coded spikes to recognize faces with as little as one spike per pixel~\cite{Delorme2001795} and some theories of neural computation require time encoding~\cite{izhikevich2006polychronization}.
 
-Since we will use discrete time steps, we divide time interval $T$ into $N_{b}$ time bins of width $W_{b}$. Each bin represents a brightness change, in either a linear or logarithmic scale. We will first treat the case in which pixels are only allowed to emit one spike per frame. If $N_{b} = T$ then we can calculate the appropriate time bin $C_{b}$ in linear scale with
+We will again use discrete time steps, so we divide time interval $T$ into $N_{b}$ time bins of width $W_{b}$. Each bin represents a brightness change, in either a linear or logarithmic scale. We will first treat the linear scale case where earlier spikes represent larger changes in intensity and restrict pixels to emit one spike per frame. We can calculate the appropriate time bin $C_{b}$ with
 \begin{equation}
 \label{eq:linear_bin_calc}
 C_{b} = N_{b} - \mathrm{min}\left( N_{b}, \;\; N_{H} \right) 
 \end{equation}
+finally, the time at which the spike will be sent is given by
+\begin{equation}
+t_{s} = C_{b}W_{b}
+\end{equation}
 
-The maximum brightness change we can express with one spike is $N_{b}\cdot H$, Figure~\ref{fig:linear_time_all} shows the value-to-spike time relation. Notice that in our proposal earlier spikes represent larger changes in intensity. The main advantage of this encoding is that a single spike could represent multiple rate-based spikes, though the encoded values are limited by time resolution and the frame rate of the camera.
+The main advantage of this encoding is that a single spike could represent multiple (at most $N_{b}$) rate-based spikes, though the encoded values are limited by time resolution and the frame rate of the camera. The green line in Figure~\ref{fig:linear_time_all} shows this spike time-to-value relation. 
 
 \begin{figure}[htb]
   \centering
@@ -176,54 +180,56 @@ The maximum brightness change we can express with one spike is $N_{b}\cdot H$, F
   \label{fig:linear_time}
 \end{figure} 
 
-To decode the spikes on the receiver end, we must keep track of the time and value from the last collected spiked. Let $\Delta t$ be the difference in arrival time between the previous and current spike~(Eq. \ref{eq:time_diff})
-
+If a receiver wants to decode the spikes, it needs to figure out the time at which each frame begins, but we do not provide information about this event. A possible solution involves keeping track of the time and value from the last collected spike, by keeping these values we can calculate the end of the previous spike's frame. Let $\Delta t$ be the difference in arrival time current spike and the end of the previous spike's originating frame (Eq.~\ref{eq:time_diff}, Fig.~\ref{fig:linear_time_calc})
 \begin{equation}
-\Delta t = t_{now} -  \left(t_{last} + \left[N_{b} - N_{H}^{last}\right]W_{b}\right)
+\Delta t = t_{now} -  \left(t_{last} + N_{H}^{last}W_{b}\right)
 \label{eq:time_diff}
 \end{equation}
-where the subtraction of $N_{b} - N_{H}^{last}W_{b}$ shifts $t_{last}$ to the beginning of its origin frame. We can now obtain the current spike time bin by computing the remainder of the division with time period $T$ and dividing by the bin width.
+where $N_{H}^{last}W_{b}$ shifts $t_{last}$ to the end of its origin frame. By having $\Delta t$ anchored at the beginning of a frame we can compute its bin with the remainder of the division with time period $T$.
 \begin{equation}
-C_{b} = \frac{\mathrm{mod}\left(\Delta t, \;\; T\right)}{W_{b}}
+C^{now}_{b} = \frac{ \mathrm{mod}\left(\Delta t, \;\; T\right) }{ W_{b} }
 \label{eq:bin_compute}
 \end{equation}
-here, `$\mathrm{mod}$' calculates its arguments division remainder. Now that the time bin $C_{b}$ is known, all it takes to compute the number of thresholds exceeded is
+here, `$\mathrm{mod}$' calculates its arguments division remainder. Now that the time bin $C_{b}$ is known we can compute the brightness difference with
 \begin{equation}
- N_{H}^{now} = \left\lfloor N_{b} - C_{b} \right\rfloor
+ \Delta B = H\cdot N_{H}^{now} =  H\left(N_{b} - C^{now}_{b}\right) 
  \label{eq:new_Nh_linear}
 \end{equation}
 
 %and reduce the probability of getting the wrong value
-To mitigate the limitation on maximum encoded values  we propose \textit{binary encoding} of the number of thresholds exceeded. The main advantage of this technique would be to achieve large values with fewer time bins as the growth is exponential (Fig. \ref{fig:exponential_time}). We propose to use this encoding in two ways: \textit{shoot-and-refine} and \textit{full value}. 
-
+By using a logarithmic scale, we can encode larger brightness differences and even do so with fewer time bins. We will study the case where earlier spikes encode larger changes, neurons fire once per frame and using base 2 logarithms. 
+%If the maximum brightness difference possible is 255, we need 8 time bins to express the whole range. 
+%Since we are using a single spike, the value encoded in spike timing will be an approximate one. 
+The time bin can be calculated with Equation~\ref{eq:log_bin_calc}, Figure~\ref{fig:exponential_time} shows the relation of spike time and brightness change with logarithmic scale.
+\begin{equation}
+\label{eq:log_bin_calc}
+C_{b} = N_{b} - \mathrm{min}\left( N_{b}, \;\; \lfloor\log_{2} N_{H}\rfloor \right) 
+\end{equation}
+and the time at which the spike would be sent, with respect to the beginning of the frame would be $t_{s} = W_{b}C_{b}$.
+%The main advantage of this technique would be to achieve large values with fewer time bins as the growth is exponential (Fig. \ref{fig:exponential_time}). We propose to use this encoding in two ways: \textit{shoot-and-refine} and \textit{full value}. 
 \begin{figure}[htb]
   \centering
   \includegraphics[width=0.49\textwidth]{spike_values_exp}
 
-  \caption{Exponential time-based encoding of thresholds ($H$) exceeded. Frame rate was 30 FPS and we used 7 time bins. }
+  \caption{Exponential time-based encoding of thresholds ($H$) exceeded. Frame rate was 30 FPS and we used 8 bits (time bins). }
   \label{fig:exponential_time}
 \end{figure} 
 
-In the \textit{shoot-and-refine} mode, a single spike is sent with an over- or underestimate of the desired value (e.g. the next power of two), and in the following frames we send at most one spike to refine the received value towards the desired one. Decoding can be done in a similar way as the linear case, but we divide the available time in $N_{b}$ bins of width is $W_{b} = T/N_{b}$. Now to compute the time difference
+Since a single spike is sent, we are sending an underestimate of the desired value (i.e. previous power of two), and in the following frames we send at most one spike to refine the received value towards the desired one~\cite{sardac}. 
+
+Decoding can be done in a similar way to the linear case, but the receiver can only record an approximate version of $N_{H}$, that is $\tilde{N}_{h} = \log_2 N_{H}$. The time difference with respect to the end of frame for the previous spike is
 \begin{equation}
-\Delta t = t_{now} - \left( t_{last} - 
-                            \left[N_{b} - log_{2}(N_{H}^{last}) + 1\right]W_{b}
-                     \right)
+\Delta t = t_{now} - \left( t_{last} + \log_{2}\tilde{N}_{H}W_{b} \right)
 \label{eq:time_diff_exp}
 \end{equation}
 
-Since we are using time bins that are larger than the system's time resolution, the term $N_{b} - N_{H}^{last}W_{b}$ of Eq.~\ref{eq:time_diff} is transformed into
+Current spike's time bin is calculated using Eq.~\ref{eq:bin_compute} and the decoded value with
 \begin{equation}
-\left[N_{b} - log_{2}(N_{H}^{last})  + 1\right]W_{b}
-\end{equation}
-
-The correct bin is calculated using Eq.~\ref{eq:bin_compute} as in the linear case; finally for the decoded value
-\begin{equation}
-N_{H}^{now} = 2^{ \left\lfloor N_{b} - B \right\rfloor }
+\Delta B = H\cdot N_{H}^{now} = H\cdot 2^{ \left( N_{b} - \lfloor C^{now}_{b}\rfloor  \right)}
 \label{eq:new_Nh_exp}
 \end{equation}
 
-For the \textit{full value} mode many spikes would be sent per pixel each frame, thus providing better resolution to the sent value, the downside to this is that an accumulation buffer is needed in addition to the previous spike time and value buffers. Decoding multiple spikes per frame has to be split in two cases: first if the new spike arrives before the current period is finished, then we accumulate its value to the current decoded value; otherwise we replace the contents of the accumulation buffer with the newly decoded value. Figure~\ref{fig:spike_codes} shows the spike representation of an MNIST digit using the proposed encoding mechanisms. The image was scaled-down to $8\times8$ for clarity and the reference frame's values were initialized at half the scale range.
+If we allow many spikes to be sent per pixel each frame, the receiver gets a closer approximation of $N_{H}$. The downside to this is that an accumulation buffer is needed in addition to the previous spike time and value buffers. Decoding multiple spikes per frame has to be split in two cases: first if the new spike arrives before the current period is finished, then we accumulate its value to the current decoded value; otherwise we replace the contents of the accumulation buffer with the newly decoded value. To test encodings we converted a hand-written digit image from the MNIST database~\cite{mnist}. We scaled the image down to $8\times8$ pixels for clarity and the reference frame's values were initialized at half the scale range, Figure~\ref{fig:spike_codes} shows the spike representation using the proposed encodings.
 
 \begin{figure*}[hbt]
   \captionsetup[subfigure]{justification=centering}
@@ -252,7 +258,7 @@ For the \textit{full value} mode many spikes would be sent per pixel each frame,
 %\subsection{Additional behaviours}
 \section{Additional behaviours}
 \label{sec:additional-behaviours}
-In this segment we describe modifications done to the basic DVS emulator, these changes are rendered in Figure~\ref{fig:dvs_emu_inh}. A history decay mechanism was added to the receiver model, constant threshold has been exchanged by an adaptive version, and an inhibitory block (\textit{\textsf{max}}) completes the list of changes.
+In this segment we describe modifications done to the basic DVS emulator, these changes are rendered in Figure~\ref{fig:dvs_emu_inh}. A history decay mechanism was added to the receiver model, the constant threshold has been exchanged for an adaptive version and an inhibitory block (\textit{\textsf{max}}) completes the list of changes.
 
 \begin{figure}[htb]
   
@@ -264,12 +270,12 @@ In this segment we describe modifications done to the basic DVS emulator, these 
 %\subsubsection{History decay} % - What if spikes get lost?}
 \subsection{History decay} % - What if spikes get lost?}
 
-Initially we described a system where every spike that is sent will be captured on the receiver end, but this is not always the case. To cope with the latter cases, we now introduce a history decay mechanism which will allow the receiver to, in the long term, recover from missing spikes. Let $D \in \mathbb{R} = (0, 1]$ be the weight history has to calculate the new reference value, then the reference's update rule becomes
+Initially we described a system where every spike that is sent will be captured by the receiver, but this is not always the case. To cope with the latter cases, we now introduce a history decay mechanism which will allow the receiver to, in the long term, recover from missing spikes. Let $D \in \mathbb{R} = (0, 1]$ be the weight for the reference frame in the calculation of its new value, the update rule becomes
 \begin{equation}
 \label{eq:ref_update_decay}
 R_{now} = D\cdot R_{last} + N_{H}\cdot H
 \end{equation}
-
+If no spikes are sent, the values in the reference frame tend to 0 which corresponds to black in our tonal scale; this can be seen as ``forgetting'' the information stored in the frame.
 %\begin{figure}[htb]
 %  \includegraphics[width=0.5\textwidth]{dvs_emu_decay}
 %
@@ -279,7 +285,7 @@ R_{now} = D\cdot R_{last} + N_{H}\cdot H
 
 %\subsubsection{Adaptive threshold} 
 \subsection{Adaptive threshold} 
-A subtle detail that other emulators have not captured is the slow-changing pixels, cameras would capture these as similar values in each frame thus the difference would never be enough to generate a spike. Meanwhile in a real DVS pixels receiving insufficient light to immediately trigger a spike, still gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold in a per-pixel basis, that is reduce it if a pixel did not create a spike. Since thresholds value may lowered, they also have to be increased if a spike was generated. These changes in the threshold effectively add a low-pass filter to the system. 
+A subtle detail is the slow-changing pixels, cameras would capture these as similar values in each frame thus the difference would never be enough to generate a spike. Meanwhile DVSs' pixels receiving insufficient light to immediately trigger a spike, still gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold on a per-pixel basis, that is reduce it if a pixel did not create a spike. Since threshold values may be lowered, they also have to be increased if a spike was generated. These changes in the threshold effectively add a low-pass filter to the system. 
 
 %\begin{figure}[htb]
 %
@@ -296,7 +302,7 @@ A subtle detail that other emulators have not captured is the slow-changing pixe
 
 %\subsubsection{Local inhibition} 
 \subsection{Local inhibition} 
-In mammalian retinas inhibitory circuits play an important role. Some researchers have suggested that it reduces the number of spikes needed to represent what the eye is sensing~\cite{basab}. Our emulator's inhibition mechanism follows a similar idea, since neighbouring pixels have similar values, we suppose that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX operation (similar to complex cells in the HMAX model~\cite{riesenhuber1999hierarchical}) of pixel areas. An example is shown in Figure~\ref{fig:local_inh}, the maximum value (in green; 77) will generate a spike, while other values (in red; 0, 31, and 15) are blocked.
+In mammalian retinas inhibitory circuits play an important role. Some researchers have suggested that they reduce the number of spikes needed to represent what the eye is sensing~\cite{basab}. Our emulator's inhibition mechanism follows a similar idea; since neighbouring pixels have resembling values, we suppose that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX operation (similar to complex cells in the HMAX model~\cite{riesenhuber1999hierarchical}) of pixel areas. An example is shown in Figure~\ref{fig:local_inh}, the maximum value (in green; 77) will generate a spike, while other values (in brown; 0, 31, and 16) are blocked.
 
 \begin{figure}[htb]
 \centering
@@ -308,9 +314,9 @@ In mammalian retinas inhibitory circuits play an important role. Some researcher
 
 \section{Results}
 \label{sec:results}
-The emulator was developed and tested in a desktop computer (Intel i5, 8GB RAM) using the Python and Cython programming languages. We targeted a maximum $128\times 128$-pixel resolution, which can perform at a 60 FPS (lower resolutions -64, 32 and 16 pixel- are also available, and can run at higher frame rates). This project is open source and it's available at \url{https://github.com/chanokin/pyDVS}.
+The emulator was developed and tested in a desktop computer (Intel i5, 8GB RAM) using the Python and Cython programming languages. We targeted a maximum $128\times 128$-pixel resolution, which can perform at a 60 FPS [lower resolutions (64, 32 and 16 pixel) are also available and can run at higher frame rates]. This project is open source and it's available at \url{https://github.com/chanokin/pyDVS}.
 
-The initial goal was to provide an alternative for computational neuroscientists that required visual input but could not afford a real DVS. To test the emulators compatibility with neuromorphic hardware, we created a PyNN-compatible~\cite{pynn} code template that communicates to the SpiNNaker platform~\cite{spinnakerOverview} over Ethernet. Figure~\ref{fig:dvs_vs_cam}
+The initial goal was to provide an alternative for computational neuroscientists who required visual input but could not afford a real DVS. To test the emulator compatibility with neuromorphic hardware, we created a PyNN-compatible~\cite{pynn} code template that communicates to the SpiNNaker platform~\cite{spinnakerOverview} over Ethernet. Figure~\ref{fig:dvs_vs_cam}
 
 \begin{figure}[htb]
 \captionsetup[subfigure]{justification=centering}
@@ -327,16 +333,16 @@ The initial goal was to provide an alternative for computational neuroscientists
   \label{fig:dvs_demo}
 \end{subfigure}
   
-  \caption{DVS VS CAM!!!!!!!!!!!!!!! 4evaaaaa!!!!!!!!!!!}
+  \caption{Visual comparison of an MNIST digit traversing a computer screen horizontally.}
   \label{fig:dvs_vs_cam}
   
 \end{figure}
 
 
 
-The emulator can natively encode videos and we provide a ``virtual camera'' that simulates movement on images so they can also be perceived. Using the virtual camera and the MNIST hand-written digits~\cite{mnist} we demonstrate the emulator's behaviours.
+The emulator can encode videos and we provide a ``virtual camera'' that simulates movement on images so they can also be perceived. Using the virtual camera and the MNIST hand-written digits we demonstrate the emulator's behaviours.
 
-The inhibitory behaviour will reduce the amount of spikes that the emulator produces per frame, while keeping some of the information needed to represent the visual input. Figure~\ref{fig:pre_inh} shows the detected spikes as the digit traverses to the right, after the inhibition step fewer spikes remain while keeping the overall shape~(Fig.~\ref{fig:post_inh}). Since not all the information is sent on the first frame and objects in video generally do not move fast enough to disappear, there is a \textit{persistence of vision}-like effect of spikes for succeeding frames.
+The inhibitory behaviour will reduce the number of spikes that the emulator produces per frame, while keeping some of the information needed to represent the visual input. Figure~\ref{fig:pre_inh} shows the detected spikes as the digit traverses to the right, after the inhibition step fewer spikes remain while keeping the overall shape~(Fig.~\ref{fig:post_inh}). Since not all the information is sent on the first frame and objects in video generally do not move fast enough to disappear, there is a \textit{persistence of vision}-like effect of spikes for succeeding frames.
 
 \begin{figure}[htb]
   \captionsetup[subfigure]{justification=centering}
@@ -360,14 +366,14 @@ The inhibitory behaviour will reduce the amount of spikes that the emulator prod
 %\footnotetext{Notice that most images in the tests are shown inverted. They originally where white over black and are now altered to black over white to better capture the behaviour}
 %%%%%%%%%%%%%%
 
-Although the majority of neuromorphic communications are fire-and-forget~\cite{Rast2015}, we were concerned that some information may be lost during transmission and so a history decay mechanism is included to cope with this problem. An example of how both sides of the transmission line can recover from a loss of spikes is shown in Figure~\ref{fig:history_decay}; of particular interest are the $sender$ and $receiver$ rows, which show what both ends ``see''. The leftmost column illustrates how the system starts and what spikes are going to be sent. If some of the spikes are lost (second column) we cannot reconstruct the picture correctly on the receiver end. After 40 waves of spikes (rightmost column), the absolute difference ($|send-recv|$ row) between the images from both ends has pixels whose average value is 8; this means that the missing information has been retransmitted due to history decay. Another effect of this mechanism is that the need to constantly move the image is no longer needed since the reference image's value tend to zero.
+Although the majority of neuromorphic communications are fire-and-forget~\cite{Rast2015}, we were concerned that some information may be lost during transmission and so a history decay mechanism is included to cope with this problem. An example of how the receiver can recover from a loss of spikes is shown in Figure~\ref{fig:history_decay}; of particular interest are the $sender$ and $receiver$ rows, which show what both ends ``see''. The leftmost column illustrates how the system starts and what spikes are going to be sent. If some of the spikes are lost (second column) we cannot reconstruct the picture correctly on the receiver end. After 40 waves of spikes (rightmost column), the absolute difference ($|send-recv|$ row) between the images from both ends has pixels whose average value is 8; this means that the missing information has been retransmitted due to history decay. Another effect of this mechanism is that the need to constantly move the image is no longer needed since the reference image's value tend to zero.
 
 \begin{figure}[htb]
 %  \captionsetup[subfigure]{justification=centering}
   \centering
   
   \includegraphics[width=0.45\textwidth]{history_decay}
-  \caption{History decay helps to remove transmission errors (1 spike per pixel with linear time encoding).}
+  \caption{History decay helps to remove transmission errors (1~spike-per-pixel with linear time encoding).}
   \label{fig:history_decay}
 \end{figure}
 
