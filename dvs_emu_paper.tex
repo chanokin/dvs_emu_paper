@@ -258,7 +258,7 @@ If we allow many spikes to be sent per pixel each frame, the receiver gets a clo
 %\subsection{Additional behaviours}
 \section{Additional behaviours}
 \label{sec:additional-behaviours}
-In this segment we describe modifications done to the basic DVS emulator, these changes are rendered in Figure~\ref{fig:dvs_emu_inh}. A history decay mechanism was added to the receiver model, the constant threshold has been exchanged for an adaptive version and an inhibitory block (\textit{\textsf{max}}) completes the list of changes.
+In this section we describe modifications done to the basic DVS emulator, these changes are rendered in Figure~\ref{fig:dvs_emu_inh}. A history decay mechanism was added to the receiver model, the constant threshold has been replaced for an adaptive version and an inhibitory block (\textit{\textsf{max}}) completes the list of changes.
 
 \begin{figure}[htb]
   
@@ -316,7 +316,7 @@ In mammalian retinas inhibitory circuits play an important role. Some researcher
 \label{sec:results}
 The emulator was developed and tested in a desktop computer (Intel i5, 8GB RAM) using the Python and Cython programming languages. We targeted a maximum $128\times 128$-pixel resolution, which can perform at a 60 FPS [lower resolutions (64, 32 and 16 pixel) are also available and can run at higher frame rates]. This project is open source and it's available at \url{https://github.com/chanokin/pyDVS}.
 
-The initial goal was to provide an alternative for computational neuroscientists who required visual input but could not afford a real DVS. To test the emulator compatibility with neuromorphic hardware, we created a PyNN-compatible~\cite{pynn} code template that communicates to the SpiNNaker platform~\cite{spinnakerOverview} over Ethernet. Figure~\ref{fig:dvs_vs_cam}
+The initial goal was to provide an alternative for computational neuroscientists who required visual input but could not afford a real DVS. To test the emulator compatibility with neuromorphic hardware, we created a PyNN-compatible~\cite{pynn} code template that communicates to the SpiNNaker platform~\cite{spinnakerOverview} over Ethernet. We tested the behaviour of a DVS~\cite{bernabeDVS} and our emulator with a PS3Eye camera~\cite{wikipedia:ps3eye}. Figure~\ref{fig:dvs_vs_cam} shows a visual comparison of the behaviour of the emulator (left) and the DVS (right); the emulator's output has some noise due to automatic exposure mechanisms. 
 
 \begin{figure}[htb]
 \captionsetup[subfigure]{justification=centering}
@@ -339,10 +339,7 @@ The initial goal was to provide an alternative for computational neuroscientists
 \end{figure}
 
 
-
-The emulator can encode videos and we provide a ``virtual camera'' that simulates movement on images so they can also be perceived. Using the virtual camera and the MNIST hand-written digits we demonstrate the emulator's behaviours.
-
-The inhibitory behaviour will reduce the number of spikes that the emulator produces per frame, while keeping some of the information needed to represent the visual input. Figure~\ref{fig:pre_inh} shows the detected spikes as the digit traverses to the right, after the inhibition step fewer spikes remain while keeping the overall shape~(Fig.~\ref{fig:post_inh}). Since not all the information is sent on the first frame and objects in video generally do not move fast enough to disappear, there is a \textit{persistence of vision}-like effect of spikes for succeeding frames.
+The emulator can encode videos and we provide a ``virtual camera'' that simulates movement on images so they can also be perceived. Using the virtual camera and the MNIST hand-written digits we demonstrate the emulator's behaviours. The inhibitory behaviour will reduce the number of spikes that the emulator produces per frame, while keeping some of the information needed to represent the visual input. Figure~\ref{fig:pre_inh} shows the detected spikes as the digit traverses to the right, after the inhibition step fewer spikes remain while keeping the overall shape~(Fig.~\ref{fig:post_inh}). Since not all the information is sent on the first frame and objects in video generally do not move fast enough to disappear between frames, there is a \textit{persistence of vision}-like effect of spikes for succeeding frames.
 
 \begin{figure}[htb]
   \captionsetup[subfigure]{justification=centering}
@@ -366,7 +363,8 @@ The inhibitory behaviour will reduce the number of spikes that the emulator prod
 %\footnotetext{Notice that most images in the tests are shown inverted. They originally where white over black and are now altered to black over white to better capture the behaviour}
 %%%%%%%%%%%%%%
 
-Although the majority of neuromorphic communications are fire-and-forget~\cite{Rast2015}, we were concerned that some information may be lost during transmission and so a history decay mechanism is included to cope with this problem. An example of how the receiver can recover from a loss of spikes is shown in Figure~\ref{fig:history_decay}; of particular interest are the $sender$ and $receiver$ rows, which show what both ends ``see''. The leftmost column illustrates how the system starts and what spikes are going to be sent. If some of the spikes are lost (second column) we cannot reconstruct the picture correctly on the receiver end. After 40 waves of spikes (rightmost column), the absolute difference ($|send-recv|$ row) between the images from both ends has pixels whose average value is 8; this means that the missing information has been retransmitted due to history decay. Another effect of this mechanism is that the need to constantly move the image is no longer needed since the reference image's value tend to zero.
+Although the majority of neuromorphic communications are fire-and-forget~\cite{Rast2015}, we were concerned that some information may be lost during transmission and so a history decay mechanism is included to cope with this problem. An example of how the receiver can recover from a loss of spikes is shown in Figure~\ref{fig:history_decay}; of particular interest are the $sender$ and $receiver$ rows, which show their reference frames (i.e. what both ``see''). The leftmost column illustrates how the system starts and what spikes are going to be sent. 
+If some of the spikes are lost (second column), the receiver cannot reconstruct the picture correctly. After 40 waves of spikes (rightmost column), the absolute difference ($|send-recv|$ row) between the reference images only has PERCENT non-zero pixels whose average value is 8; this means that the missing information has been retransmitted due to history decay. Another effect of this mechanism is that the need to constantly move the image is removed since the reference values are continuously lowered; this effect furthers the difference between the image and the reference up to a point at which spikes are produced.
 
 \begin{figure}[htb]
 %  \captionsetup[subfigure]{justification=centering}
@@ -380,16 +378,17 @@ Although the majority of neuromorphic communications are fire-and-forget~\cite{R
 
 \section{Conclusion}
 \label{sec:conclusions}
-An important contribution of the field of computer vision research has been the development of image and video databases. In order to utilize them in spiking neural networks without pointing a real DVS at a monitor, we developed the emulator presented here. Using well known datasets, allows an easier comparison between spiking and traditional neural networks.
+An important contribution of the field of computer vision research has been the development of image and video databases. To utilize them in spiking neural networks without pointing a DVS at a monitor, we developed the emulator presented here. 
+%Using well known datasets, allows an easier comparison between spiking and traditional neural networks.
 
-Emulating a DVS provides the flexibility to modify the system's behaviour in software. One of such changes is to encode values represented by spikes using time instead of rate. By providing such output encoding, this work may incentivize  scientist to depart from rate-coded SNNs and explore time-coded ones.
+Emulating a DVS provides the flexibility to modify the system's behaviour in software. One such change is to encode values represented by spikes using time instead of rate. This allows to send more information per spike and lowers bandwidth requirements. Image analysis with time-coded spikes has not been as popular as rate-coded ones, this emulator.
 
 Our inhibitory component has the side-effect similar to persistence of stimuli, but in this case neighbouring pixels tend to keep the similar shapes in succeeding frames. 
 %We theorize that it could help to ease timing issues with time-coded spiking networks.
 
 \section{Future work}
 \label{sec:future-work}
-While the image resolution of the current version of our emulator is low, we've developed an OpenCL version. By using the parallel processing nature of Graphics Processing Units it was possible to encode images at higher resolutions\footnote{We tested up to 1080p video at 30 FPS}; the main problem with this large imagery is that serializing and transmitting such quantities of spikes has proven a hard task.
+While the image resolution of the current version of our emulator is low, we've developed an OpenCL version. By using the parallel processing nature of Graphics Processing Units it was possible to encode images at higher resolutions (we have tested up to 1080p video at 30 FPS); the main problem with this large imagery is that serializing and transmitting such quantities of spikes has proven a hard task.
 
 Research on encoding spikes using convolution kernels is ongoing. We've explored using a kernel based on Carver Mead's original silicon retina~\cite{Mead1989} connectivity and biologically inspired difference of Gaussian kernels~\cite{basab}. These types of encoding could prove to be more efficient as a single spike would represent a region of the image instead of a single pixel.
 \section*{Acknowledgement}
