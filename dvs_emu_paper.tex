@@ -211,7 +211,7 @@ and the time at which the spike would be sent, with respect to the beginning of 
   \centering
   \includegraphics[width=0.49\textwidth]{spike_values_exp}
 
-  \caption{Exponential time-based encoding of thresholds ($H$) exceeded. Frame rate was 30 FPS and we used 8 bits (time bins). }
+  \caption{Exponential time-based encoding of thresholds ($H$) exceeded. Frame rate was 30 FPS and we used 7 bits (time bins). }
   \label{fig:exponential_time}
 \end{figure} 
 
@@ -324,12 +324,12 @@ The initial goal was to provide an alternative for computational neuroscientists
 \centering
 \begin{subfigure}[b]{0.24\textwidth}
   \includegraphics[width=\textwidth]{camera_demo}
-  \caption{Recording from DVS emulator. }
+  \caption{Recording from \\DVS emulator. }
   \label{fig:cam_demo}
 \end{subfigure}
 \begin{subfigure}[b]{0.24\textwidth}
   \includegraphics[width=\textwidth]{dvs_demo}
-  \caption{Recording from silicon retina~\cite{bernabeDVS}.}
+  \caption{Recording from \\silicon retina~\cite{bernabeDVS}.}
   \label{fig:dvs_demo}
 \end{subfigure}
   
@@ -378,17 +378,18 @@ If some of the spikes are lost (second column), the receiver cannot reconstruct 
 
 \section{Conclusion}
 \label{sec:conclusions}
-An important contribution of the field of computer vision research has been the development of image and video databases. To utilize them in spiking neural networks without pointing a DVS at a monitor, we developed the emulator presented here. 
+An important contribution of the field of computer vision research has been the development of image and video databases. To utilize them in spiking neural networks without pointing a DVS at a monitor, we developed the emulator presented here. To encode images we developed a ``virtual camera'' that simulates movement so the pictures can be captured by the DVS. Two of these motions are inspired by eye movements known as saccades.
 %Using well known datasets, allows an easier comparison between spiking and traditional neural networks.
 
-Emulating a DVS provides the flexibility to modify the system's behaviour in software. One such change is to encode values represented by spikes using time instead of rate. This allows to send more information per spike and lowers bandwidth requirements. Image analysis with time-coded spikes has not been as popular as rate-coded ones, this emulator.
+Emulating a DVS provides the flexibility to modify the system's behaviour in software. One such change is to encode values represented by spikes using time instead of rate. This allows to send more information per spike and lowers bandwidth requirements. 
+%mage analysis with time-coded spikes has not been as popular as rate-coded ones, this emulator.
 
-Our inhibitory component has the side-effect similar to persistence of stimuli, but in this case neighbouring pixels tend to keep the similar shapes in succeeding frames. 
+Our inhibitory component splits spike emission at most four frames, it also presents a side-effect similar to persistence of stimuli. If the adaptive threshold block is used, the emulator should filter out fast changing pixels thus reducing the number of spikes emitted. After considering that not all spikes will arrive to their destination, we developed a history decay mechanism for the reference update. This has the effect of fixing transmission errors and continuously sending spikes if pixel values are larger than the threshold, even without moving images.
 %We theorize that it could help to ease timing issues with time-coded spiking networks.
 
 \section{Future work}
 \label{sec:future-work}
-While the image resolution of the current version of our emulator is low, we've developed an OpenCL version. By using the parallel processing nature of Graphics Processing Units it was possible to encode images at higher resolutions (we have tested up to 1080p video at 30 FPS); the main problem with this large imagery is that serializing and transmitting such quantities of spikes has proven a hard task.
+While the image resolution of the current version of our emulator is low, we've developed an OpenCL version. By using the parallel processing nature of Graphics Processing Units it was possible to encode images at higher resolutions (we have tested up to $1920\times1080$ video at 30 FPS); the main problem with this large imagery is that serializing and transmitting such quantities of spikes has proven a hard task.
 
 Research on encoding spikes using convolution kernels is ongoing. We've explored using a kernel based on Carver Mead's original silicon retina~\cite{Mead1989} connectivity and biologically inspired difference of Gaussian kernels~\cite{basab}. These types of encoding could prove to be more efficient as a single spike would represent a region of the image instead of a single pixel.
 \section*{Acknowledgement}
