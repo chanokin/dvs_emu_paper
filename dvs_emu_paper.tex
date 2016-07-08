@@ -58,14 +58,15 @@
       \IEEEauthorrefmark{1}School of Computer Science\\
       University of Manchester\\
       Manchester, United Kingdom\\
-      garibaldi.pinedagarcia@manchester.ac.uk
+      garibaldi.pinedagarcia, qian.liu2, steve.furber\\
+      @manchester.ac.uk
       \end{minipage}
       \begin{minipage}{0.5\textwidth}
       \centering
-      \IEEEauthorrefmark{2}School of Computer Science\\
-        University of Manchester\\
-        Manchester, United Kingdom\\
-        garibaldi.pinedagarcia@manchester.ac.uk
+      \IEEEauthorrefmark{2}
+      Entrepreneur First\\
+      London, United Kingdom \\
+      patrick.camillery@gmail.com
       \end{minipage}
 %    \end{tabular}
   }
@@ -93,13 +94,13 @@ We propose a visual input system inspired by the behaviour of a DVS but using a 
 
 In recent years the rate of increase of computer processors' performance has been slow; this is mainly because manufacturing technologies are reaching their physical limits. One way to improve performance is to use many processors in parallel, which has been successfully applied to parallel-friendly applications such as computer graphics. Meanwhile tasks such as pattern recognition remain difficult for computers, even with these technological advances.
 
-Our brains are particularly good at learning and recognizing visual patterns (e.g. letters, dogs, houses, etc.). To achieve better performance for similar tasks on computers, scientists have looked to biology for inspiration. This has led to the rise of brain-like (neuromorphic) hardware, which mimics functional aspects of the nervous system. We can divide neuromorphic hardware into sensors (providing input), computing devices (which make use of information from sensors) and actuators (which control devices). Traditionally visual input has been obtained from images that are rate-encoded, that is every pixel is interpreted as a neuron that will fire a number of times proportional to its brightness, usually via a Poisson process~\cite{snyder2012random}. While this might be a biologically-plausible encoding in the first phase of a ``visual pipeline'', it is unlikely that retinas transmit as many spikes into later stages. Furthermore, if we think in terms of digital networks, having each pixel represented by a Poisson process could incur high bandwidth requirements. 
+Our brains are particularly good at learning and recognizing visual patterns (e.g. letters, dogs, houses, etc.). To achieve better performance for similar tasks on computers, scientists have looked to biology for inspiration. This has led to the rise of brain-like (neuromorphic) hardware, which mimics functional aspects of the nervous system. We can divide neuromorphic hardware into sensors (providing input), computing devices (which make use of information from sensors) and actuators (which control devices). Traditionally, visual input has been obtained from images that are rate-encoded, that is every pixel is interpreted as a neuron that will fire a number of times proportional to its brightness, usually via a Poisson process~\cite{snyder2012random}. While this might be a biologically-plausible encoding in the first phase of a ``visual pipeline'', it is unlikely that retinas transmit as many spikes into later stages. Furthermore, if we think in terms of digital networks, having each pixel represented by a Poisson process could incur high bandwidth requirements. 
 
 In \citeyear{Mead1989}, \citeauthor{Mead1989} proposed a silicon retina consisting of individual photoreceptors and a resistor mesh which allowed nearby receptors to influence the output of a pixel~\cite{Mead1989}. 
 Later, researchers developed frame-free Dynamic Vision Sensors (DVSs)~\cite{delbruckDVS,bernabeDVS}. These feature independent pixels which emit a signal when their log-intensity values change by a certain threshold.
-These sensors have microsecond response time, excellent dynamic range properties and frame-free output, although they are still not as widely available as conventional cameras and relatively expensive.
+These sensors have microsecond response time, excellent dynamic range properties and frame-free output, although they are still not as widely available as conventional cameras and are relatively expensive.
 
-An alternative that could reduce the cost and scarcity of DVSs while keeping spike rates low is to emulate the behaviour of a DVS. \citeauthor{DVSemu} developed a DVS emulator in order to test behaviours for new sensor models~\cite{DVSemu}. In their work, they transform video [at 125 frames per second (FPS)] provided by a commercial camera into a spike stream. In simple terms, the emulation is done by differencing video input with a reference frame; if this difference is larger than a threshold it produces an output and updates the reference. The number of spikes produced per pixel are proportional to the difference-to-threshold ratio. This emulator has been merged into their jAER project~\cite{delbruck2008frame}, a Java-based Address-Event Representation software framework that specializes in processing DVS output in real time.
+An alternative that could reduce the cost and scarcity of DVSs while keeping spike rates low is to emulate the behaviour of a DVS. \citeauthor{DVSemu} developed a DVS emulator in order to test behaviours for new sensor models~\cite{DVSemu}. In their work, they transform video [at 125 frames per second (FPS)] provided by a commercial camera into a spike stream. In simple terms, the emulation is done by differencing video input with a reference frame; if this difference is larger than a threshold it produces an output and updates the reference. The number of spikes produced per pixel is proportional to the difference-to-threshold ratio. This emulator has been merged into their jAER project~\cite{delbruck2008frame}, a Java-based Address-Event Representation software framework that specializes in processing DVS output in real time.
 
 In this work, we present a behavioural emulator of a DVS using a conventional digital camera as a sensor. Basing the emulator on widely available hardware allows computational neuroscientists to include video as a spike-encoded input without the cost of a DVS. We present our basic emulator in Section~\ref{sec:basic-emulator}. In Section~\ref{sec:output-modes} we describe the spike encodings provided, Section~\ref{sec:additional-behaviours} discusses processing blocks added to the basic emulator. Results are given in Section~\ref{sec:results}; conclusions and suggestions for future work are given in Sections~\ref{sec:conclusions} and~\ref{sec:future-work}, respectively.
 
@@ -107,7 +108,7 @@ In this work, we present a behavioural emulator of a DVS using a conventional di
 \section{The emulator}
 \label{sec:basic-emulator}
 
-Our emulator works by analysing the difference of the latest frame captured from the camera and a reference frame. If a pixel changes by more than a certain threshold, then we generate an event which contains the pixel's coordinates and whether the change was positive or negative. 
+Our emulator works by analysing the difference between the latest frame captured from the camera and a reference frame. If a pixel changes by more than a certain threshold, then we generate an event which contains the pixel's coordinates and whether the change was positive or negative. 
 
 Pixels in DVSs have a logarithmic response to light intensity, similarly most commercial cameras produce gamma-encoded images~\cite{PoyntonDigitalVideo} for better bit utilization and, in the past, to be compliant with cathode ray tube (CRT) monitors.
 % Figure~\ref{fig:gamma_coding} shows the response for the encoding process (crosses), CRT monitors (hexagons) and decoding process (dots). 
@@ -133,7 +134,7 @@ Figure~\ref{fig:dvs_emu} shows the basic DVS emulation diagram, we obtain an ima
 \section{Output encoding}
 \label{sec:output-modes}
 %\subsubsection{Rate-based}
-In conventional video cameras pixels capture light to form an image and repeat this process in a regular time interval ($T$), these images are usually called frames. To emulate a frame-free system, we convert pixel's brightness into events. Since we are developing a real-time system, all events should be emitted between frames. For example, if the discrete time interval $T = 10 ms$ and neurons (representing pixels) fire once per millisecond, then they can emit at most $10$ spikes.
+In conventional video cameras pixels capture light to form an image and repeat this process in a regular time interval ($T$), these images are usually called frames. To emulate a frame-free system, we convert pixels' brightness differences into events. Since we are developing a real-time system, all events should be emitted between frames. For example, if the discrete time interval $T = 10 ms$ and neurons (representing pixels) fire once per millisecond, then they can emit at most $10$ spikes.
 \subsection{Rate-based}
 As in previous emulators~\cite{DVSemu}, the standard output format is rate-based. Each emitted spike signifies the pixel changed by $H$ brightness levels, where $H$ is also the threshold. Let $N_{H}$ be the integer division of a pixel's brightness change $\Delta B$ by the threshold $H$ and limiting by $T$, the number of spikes ($N_{s}$) needed to represent $\Delta B$ will be
 \begin{equation}
@@ -200,12 +201,13 @@ here, `$\mathrm{mod}$' calculates its arguments division remainder. Now that the
 By using a logarithmic scale, we can encode larger brightness differences and even do so with fewer time bins. We will study the case where earlier spikes encode larger changes, neurons fire once per frame and using base 2 logarithms. 
 %If the maximum brightness difference possible is 255, we need 8 time bins to express the whole range. 
 %Since we are using a single spike, the value encoded in spike timing will be an approximate one. 
-The time bin can be calculated with Equation~\ref{eq:log_bin_calc}, Figure~\ref{fig:exponential_time} shows the relation of spike time and brightness change with logarithmic scale.
+The time bin can be calculated with Equation~\ref{eq:log_bin_calc}. Figure~\ref{fig:exponential_time} shows the relation of spike time and brightness change with logarithmic scale.
 \begin{equation}
 \label{eq:log_bin_calc}
 C_{b} = N_{b} - \mathrm{min}\left( N_{b}, \;\; \lfloor\log_{2} N_{H}\rfloor \right) 
 \end{equation}
-and the time at which the spike would be sent, with respect to the beginning of the frame would be $t_{s} = W_{b}C_{b}$.
+
+The time at which the spike would be sent, with respect to the beginning of the frame would be $t_{s} = W_{b}C_{b}$.
 %The main advantage of this technique would be to achieve large values with fewer time bins as the growth is exponential (Fig. \ref{fig:exponential_time}). We propose to use this encoding in two ways: \textit{shoot-and-refine} and \textit{full value}. 
 \begin{figure}[htb]
   \centering
@@ -229,7 +231,9 @@ Current spike's time bin is calculated using Eq.~\ref{eq:bin_compute} and the de
 \label{eq:new_Nh_exp}
 \end{equation}
 
-If we allow many spikes to be sent per pixel each frame, the receiver gets a closer approximation of $N_{H}$. The downside to this is that an accumulation buffer is needed in addition to the previous spike time and value buffers. Decoding multiple spikes per frame has to be split in two cases: first if the new spike arrives before the current period is finished, then we accumulate its value to the current decoded value; otherwise we replace the contents of the accumulation buffer with the newly decoded value. To test encodings we converted a hand-written digit image from the MNIST database~\cite{mnist}. We scaled the image down to $8\times8$ pixels for clarity and the reference frame's values were initialized at half the scale range, Figure~\ref{fig:spike_codes} shows the spike representation using the proposed encodings.
+If we allow many spikes to be sent per pixel per frame, the receiver gets a closer approximation of $N_{H}$. The downside to this is that an accumulation buffer is needed in addition to the previous spike time and value buffers.
+
+Decoding multiple spikes per frame has to be split in two cases: first, if the new spike arrives before the current period is finished, then we accumulate its value to the current decoded value; otherwise we replace the contents of the accumulation buffer with the newly decoded value. To test encodings we converted a hand-written digit image from the MNIST database~\cite{mnist,mnist:web}. We scaled the image down to $8\times8$ pixels for clarity and the reference frame's values were initialized at half the scale range, Figure~\ref{fig:spike_codes} shows the spike representation using the proposed encodings.
 
 \begin{figure*}[hbt]
   \captionsetup[subfigure]{justification=centering}
@@ -258,7 +262,7 @@ If we allow many spikes to be sent per pixel each frame, the receiver gets a clo
 %\subsection{Additional behaviours}
 \section{Additional behaviours}
 \label{sec:additional-behaviours}
-In this section we describe modifications done to the basic DVS emulator, these changes are rendered in Figure~\ref{fig:dvs_emu_inh}. A history decay mechanism was added to the receiver model, the constant threshold has been replaced for an adaptive version and an inhibitory block (\textit{\textsf{max}}) completes the list of changes.
+In this section we describe modifications to the basic DVS emulator, these are rendered in Figure~\ref{fig:dvs_emu_inh}. A history decay mechanism was added to the receiver model, the constant threshold has been replaced for an adaptive version and an inhibitory block (\textit{\textsf{max}}) completes the list of changes.
 
 \begin{figure}[htb]
   
@@ -270,7 +274,7 @@ In this section we describe modifications done to the basic DVS emulator, these 
 %\subsubsection{History decay} % - What if spikes get lost?}
 \subsection{History decay} % - What if spikes get lost?}
 
-Initially we described a system where every spike that is sent will be captured by the receiver, but this is not always the case. To cope with the latter cases, we now introduce a history decay mechanism which will allow the receiver to, in the long term, recover from missing spikes. Let $D \in \mathbb{R} = (0, 1]$ be the weight for the reference frame in the calculation of its new value, the update rule becomes
+Initially we described a system where every spike sent will be captured by the receiver, but this is not always the case. To cope with the latter cases, we now introduce a history decay mechanism which will allow the receiver to, in the long term, recover from missing spikes. Let $D \in \mathbb{R} = (0, 1]$ be the weight for the reference frame in the calculation of its new value, the update rule becomes
 \begin{equation}
 \label{eq:ref_update_decay}
 R_{now} = D\cdot R_{last} + N_{H}\cdot H
@@ -285,7 +289,7 @@ If no spikes are sent, the values in the reference frame tend to 0 which corresp
 
 %\subsubsection{Adaptive threshold} 
 \subsection{Adaptive threshold} 
-A subtle detail is the slow-changing pixels, cameras would capture these as similar values in each frame thus the difference would never be enough to generate a spike. Meanwhile DVSs' pixels receiving insufficient light to immediately trigger a spike, still gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold on a per-pixel basis, that is reduce it if a pixel did not create a spike. Since threshold values may be lowered, they also have to be increased if a spike was generated. These changes in the threshold effectively add a low-pass filter to the system. 
+Slow-changing pixels in cameras would capture small brightness values each frame thus the difference would never be enough to generate a spike. Meanwhile DVSs' pixels receiving insufficient light to immediately trigger a spike, still gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold on a per-pixel basis, that is reduce it if a pixel did not create a spike. Since threshold values may be lowered, they also have to be increased if a spike was generated. These changes in the threshold effectively add a low-pass filter to the system. 
 
 %\begin{figure}[htb]
 %
@@ -302,12 +306,12 @@ A subtle detail is the slow-changing pixels, cameras would capture these as simi
 
 %\subsubsection{Local inhibition} 
 \subsection{Local inhibition} 
-In mammalian retinas inhibitory circuits play an important role. Some researchers have suggested that they reduce the number of spikes needed to represent what the eye is sensing~\cite{basab}. Our emulator's inhibition mechanism follows a similar idea; since neighbouring pixels have resembling values, we suppose that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX operation (similar to complex cells in the HMAX model~\cite{riesenhuber1999hierarchical}) of pixel areas. An example is shown in Figure~\ref{fig:local_inh}, the maximum value (in green; 77) will generate a spike, while other values (in brown; 0, 31, and 16) are blocked.
+In mammalian retinas inhibitory circuits play an important role. Some researchers have suggested that they reduce the number of spikes needed to represent what the eye is sensing~\cite{basab}. Our emulator's inhibition mechanism follows a similar idea; since neighbouring pixels have similar values, we suppose that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX operation (similar to complex cells in the HMAX model~\cite{riesenhuber1999hierarchical}) of pixel areas. An example is shown in Figure~\ref{fig:local_inh}; the maximum value (in green; 77) will generate a spike, while other values (in brown; 0, 31, and 16) are blocked.
 
 \begin{figure}[htb]
 \centering
     \includegraphics[width=0.3\textwidth]{inh_local_max_img}
-    \caption{Local inhibition mechanism, quantities represent the absolute value of the difference between an image and the reference. Green and red mean a spike event, brown pixels did not spike}
+    \caption{Local inhibition mechanism. Quantities represent the absolute value of the difference between an image and the reference. Green and red mean a spike event, brown pixels did not spike}
 
   \label{fig:local_inh}
 \end{figure}
@@ -364,7 +368,7 @@ The emulator can encode videos and we provide a ``virtual camera'' that simulate
 %%%%%%%%%%%%%%
 
 Although the majority of neuromorphic communications are fire-and-forget~\cite{Rast2015}, we were concerned that some information may be lost during transmission and so a history decay mechanism is included to cope with this problem. An example of how the receiver can recover from a loss of spikes is shown in Figure~\ref{fig:history_decay}; of particular interest are the $sender$ and $receiver$ rows, which show their reference frames (i.e. what both ``see''). The leftmost column illustrates how the system starts and what spikes are going to be sent. 
-If some of the spikes are lost (second column), the receiver cannot reconstruct the picture correctly. After 40 waves of spikes (rightmost column), the absolute difference ($|send-recv|$ row) between the reference images only has PERCENT non-zero pixels whose average value is 8; this means that the missing information has been retransmitted due to history decay. Another effect of this mechanism is that the need to constantly move the image is removed since the reference values are continuously lowered; this effect furthers the difference between the image and the reference up to a point at which spikes are produced.
+If some of the spikes are lost (second column), the receiver cannot reconstruct the picture correctly. After 40 waves of spikes (rightmost column),  pixels in the absolute difference ($|send-recv|$ row) between the reference images have an 8.6 average value which is bellow the threshold. This means that the missing information has been retransmitted due to history decay. Another effect of this mechanism is that the need to constantly move the image is removed since the reference values are continuously lowered; this effect furthers the difference between the image and the reference up to a point at which spikes are produced.
 
 \begin{figure}[htb]
 %  \captionsetup[subfigure]{justification=centering}
@@ -378,28 +382,28 @@ If some of the spikes are lost (second column), the receiver cannot reconstruct 
 
 \section{Conclusion}
 \label{sec:conclusions}
-An important contribution of the field of computer vision research has been the development of image and video databases. To utilize them in spiking neural networks without pointing a DVS at a monitor, we developed the emulator presented here. To encode images we developed a ``virtual camera'' that simulates movement so the pictures can be captured by the DVS. Two of these motions are inspired by eye movements known as saccades.
+An important contribution to the field of computer vision research has been the development of image and video databases. To utilize them in spiking neural networks without pointing a DVS at a monitor, we developed the emulator presented here. To encode images we developed a ``virtual camera'' that simulates movement so the pictures can be captured by the DVS. Two of these motions are inspired by eye movements known as saccades.
 %Using well known datasets, allows an easier comparison between spiking and traditional neural networks.
 
-Emulating a DVS provides the flexibility to modify the system's behaviour in software. One such change is to encode values represented by spikes using time instead of rate. This allows to send more information per spike and lowers bandwidth requirements. 
+Emulating a DVS provides the flexibility to modify the system's behaviour in software. One such change is to encode values represented by spikes using time instead of rate. This allows more information to be sent per spike and lowers bandwidth requirements. 
 %mage analysis with time-coded spikes has not been as popular as rate-coded ones, this emulator.
 
-Our inhibitory component splits spike emission at most four frames, it also presents a side-effect similar to persistence of stimuli. If the adaptive threshold block is used, the emulator should filter out fast changing pixels thus reducing the number of spikes emitted. After considering that not all spikes will arrive to their destination, we developed a history decay mechanism for the reference update. This has the effect of fixing transmission errors and continuously sending spikes if pixel values are larger than the threshold, even without moving images.
+Our inhibitory component splits spike emission into, at most, four frames and it also presents a side-effect similar to persistence of stimuli. If the adaptive threshold block is used, the emulator should filter out fast changing pixels thus reducing the number of spikes emitted. After considering that not all spikes will arrive to their destination, we developed a history decay mechanism for the reference update. This has the effect of fixing transmission errors and continuously sending spikes if pixel values are larger than the threshold, even without moving images.
 %We theorize that it could help to ease timing issues with time-coded spiking networks.
 
 \section{Future work}
 \label{sec:future-work}
-While the image resolution of the current version of our emulator is low, we've developed an OpenCL version. By using the parallel processing nature of Graphics Processing Units it was possible to encode images at higher resolutions (we have tested up to $1920\times1080$ video at 30 FPS); the main problem with this large imagery is that serializing and transmitting such quantities of spikes has proven a hard task.
+While the image resolution of the current version of our emulator is low, an OpenCL version has been developed. By using the parallel processing nature of Graphics Processing Units it was possible to encode images at higher resolutions (we have tested up to $1920\times1080$ video at 30 FPS); the main problem with this large imagery is that serializing and transmitting such numbers of spikes has proven a hard task.
 
-Research on encoding spikes using convolution kernels is ongoing. We've explored using a kernel based on Carver Mead's original silicon retina~\cite{Mead1989} connectivity and biologically inspired difference of Gaussian kernels~\cite{basab}. These types of encoding could prove to be more efficient as a single spike would represent a region of the image instead of a single pixel.
+Research on encoding spikes using convolution kernels is ongoing. We have explored, using a kernel based on Carver Mead's original silicon retina connectivity~\cite{Mead1989} and biologically inspired difference of Gaussian kernels~\cite{basab}. These types of encoding could prove to be more efficient since a single spike would represent a region of the image instead of a single pixel.
 \section*{Acknowledgement}
-EPSRC??? 
+%EPSRC??? 
+%HBP???
 
-HBP???
+This research was funded by the Mexican National Science and Technology Council (CONACyT) and the Secretariat of Public Education (SEP).
 
-SEP 
-
-Talks at Capo Caccia
+%The authors would like to thank John Viv Woods and Jim Garside for proofreading 
+%This work was inspired by talks at the Capo Caccia Workshop.
 
 \bibliography{biblio_dvs_emu_paper}
 \bibliographystyle{IEEEtranN}
