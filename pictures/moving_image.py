@@ -5,12 +5,21 @@ import numpy as np
 from numpy import int16, uint16, uint8, float16, log2
 
 import cv2
-from cv2 import cvtColor as convertColor, COLOR_BGR2GRAY, COLOR_GRAY2RGB,                resize, imread, imwrite
+from cv2 import cvtColor as convertColor, COLOR_BGR2GRAY, COLOR_GRAY2RGB,
+                resize, imread, imwrite
 
 try:                  #nearest neighboor interpolation
-  from cv2.cv import CV_INTER_NN,                      CV_CAP_PROP_FRAME_WIDTH,                      CV_CAP_PROP_FRAME_HEIGHT,                      CV_CAP_PROP_FPS,                      CV_LOAD_IMAGE_GRAYSCALE
+  from cv2.cv import CV_INTER_NN, \
+                     CV_CAP_PROP_FRAME_WIDTH, \
+                     CV_CAP_PROP_FRAME_HEIGHT, \
+                     CV_CAP_PROP_FPS, \
+                     CV_LOAD_IMAGE_GRAYSCALE 
 except:
-  from cv2 import INTER_NEAREST as CV_INTER_NN,                   CAP_PROP_FRAME_WIDTH as CV_CAP_PROP_FRAME_WIDTH,                   CAP_PROP_FRAME_HEIGHT as CV_CAP_PROP_FRAME_HEIGHT,                   CAP_PROP_FPS as CV_CAP_PROP_FPS,                   IMREAD_GRAYSCALE as CV_LOAD_IMAGE_GRAYSCALE
+  from cv2 import INTER_NEAREST as CV_INTER_NN, \
+                  CAP_PROP_FRAME_WIDTH as CV_CAP_PROP_FRAME_WIDTH, \
+                  CAP_PROP_FRAME_HEIGHT as CV_CAP_PROP_FRAME_HEIGHT, \
+                  CAP_PROP_FPS as CV_CAP_PROP_FPS, \
+                  IMREAD_GRAYSCALE as CV_LOAD_IMAGE_GRAYSCALE
 
 import pyximport; pyximport.install()
 #from pydvs.generate_spikes import *
