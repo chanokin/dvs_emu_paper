@@ -13,12 +13,19 @@ try:                  #nearest neighboor interpolation
   from cv2.cv import CV_INTER_NN, \
                      CV_CAP_PROP_FRAME_WIDTH, \
                      CV_CAP_PROP_FRAME_HEIGHT, \
-                     CV_CAP_PROP_FPS
+                     CV_CAP_PROP_FPS, \
+                     CV_CAP_PROP_AUTO_EXPOSURE, \
+                     CV_CAP_PROP_GAIN, \
+                     CV_CAP_PROP_EXPOSURE
+                     
 except:
   from cv2 import INTER_NEAREST as CV_INTER_NN, \
                   CAP_PROP_FRAME_WIDTH as CV_CAP_PROP_FRAME_WIDTH, \
                   CAP_PROP_FRAME_HEIGHT as CV_CAP_PROP_FRAME_HEIGHT, \
-                  CAP_PROP_FPS as CV_CAP_PROP_FPS
+                  CAP_PROP_FPS as CV_CAP_PROP_FPS, \
+                  CAP_PROP_AUTO_EXPOSURE as CV_CAP_PROP_AUTO_EXPOSURE, \
+                  CAP_PROP_GAIN as CV_CAP_PROP_GAIN, \
+                  CAP_PROP_EXPOSURE as CV_CAP_PROP_EXPOSURE
 
 import pyximport; pyximport.install()
 from pydvs.generate_spikes import *
@@ -172,7 +179,7 @@ data_mask = uint8(cam_res - 1)
 polarity = POLARITY_DICT[ MERGED_POLARITY ]
 output_type = OUTPUT_TIME
 history_weight = 1.0
-threshold = 16 # ~ 0.05*255
+threshold = 24 # ~ 0.05*255
 max_threshold = 180 # 12*15 ~ 0.7*255
 
 scale_width = 0
@@ -217,6 +224,19 @@ try:
   video_dev.set(CV_CAP_PROP_FRAME_WIDTH, 320)
   video_dev.set(CV_CAP_PROP_FRAME_HEIGHT, 240)
   video_dev.set(CV_CAP_PROP_FPS, 125)
+except:
+  pass
+
+try:
+  video_dev.set(CV_CAP_PROP_AUTO_EXPOSURE, 0)
+except:
+  pass
+try:
+  video_dev.set(CV_CAP_PROP_GAIN, 16)
+except:
+  pass
+try:
+  video_dev.set(CV_CAP_PROP_EXPOSURE, 64)
 except:
   pass
   

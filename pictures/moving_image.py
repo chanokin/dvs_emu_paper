@@ -5,7 +5,7 @@ import numpy as np
 from numpy import int16, uint16, uint8, float16, log2
 
 import cv2
-from cv2 import cvtColor as convertColor, COLOR_BGR2GRAY, COLOR_GRAY2RGB,
+from cv2 import cvtColor as convertColor, COLOR_BGR2GRAY, COLOR_GRAY2RGB, \
                 resize, imread, imwrite
 
 try:                  #nearest neighboor interpolation
