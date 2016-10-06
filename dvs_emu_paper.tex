@@ -45,6 +45,8 @@
 \begin{document}
 %opening
 \title{pyDVS: An Extensible, Real-time Dynamic Vision Sensor Emulator using Off-the-Shelf Hardware}
+%\title{pyDVS: An Extensible, Real-time Dynamic Vision Sensor Emulator}
+
 \author{
 
   \IEEEauthorblockN{Garibaldi~Pineda~García\IEEEauthorrefmark{1},~
@@ -68,7 +70,7 @@
       Entrepreneur First\\
       100 Clements Road\\
       London, United Kingdom \\
-      patrick.camillery@gmail.com
+      patrick.camilleri@gmail.com
       \end{minipage}
 %    \end{tabular}
   }
@@ -80,13 +82,12 @@
 %\begin{multicols}{2}
 %[
 \begin{abstract}
-%\textsf{
-Vision is one of our most important senses, a vast amount of information is perceived through our eyes. Neuroscientists have performed many studies using vision as input to their experiments. Computational neuroscientists have typically used a brightness-to-rate encoding to use images as spike-based visual sources for its natural mapping. Recently, neuromorphic Dynamic Vision Sensors (DVSs) were developed and, while they have excellent capabilities, they remain scarce and relatively expensive.
-%}
 
-%\textsf{
+Vision is one of our most important senses, a vast amount of information is perceived through our eyes. Neuroscientists have performed many studies using vision as input to their experiments. Computational neuroscientists have typically used a brightness-to-rate encoding to use images as spike-based visual sources for its natural mapping. Recently, neuromorphic Dynamic Vision Sensors (DVSs) were developed and, while they have excellent capabilities, they remain scarce and relatively expensive.
+
+
 We propose a visual input system inspired by the behaviour of a DVS but using a conventional digital camera as a sensor and a PC to encode the images. By using readily-available components, we believe most scientists would have access to a realistic spiking visual input source. While our primary goal is to provide systems with a live real-time  input, we have also been successful in transcoding well established image and video databases into spike train representations. Our main contribution is a DVS emulator framework which can be extended, as we demonstrate by adding local inhibitory behaviour, adaptive thresholds and spike-timing encoding.
-%}
+
 
 \end{abstract}
 %]
@@ -104,7 +105,7 @@ These sensors have microsecond response time, excellent dynamic range properties
 
 An alternative that could reduce the cost and scarcity of DVSs while keeping spike rates low is to emulate the behaviour of a DVS. \citeauthor{DVSemu} developed a DVS emulator to test behaviours for new sensor models~\cite{DVSemu}. In their work, they transform video [at 125 frames per second (FPS)] provided by a commercial camera into a spike stream. In simple terms, the emulation is done by differencing video input with a reference frame; if this difference is larger than a threshold it produces an output and updates the reference. The number of spikes produced per pixel is proportional to the difference-to-threshold ratio. This emulator has been merged into their jAER project~\cite{delbruck2008frame}, a Java-based Address-Event Representation software framework that specializes in processing DVS output in real time.
 
-In this work, we present an extendible behavioural emulator of a DVS using a conventional digital camera as a sensor. Basing the emulator on widely available hardware allows computational neuroscientists to include video as a spike-encoded input without the cost of a DVS. We present our basic emulator in Section~\ref{sec:basic-emulator}. In Section~\ref{sec:emu-extensions} we present our extensions to the emulator. Results are given in Section~\ref{sec:results}; conclusions and suggestions for future work are given in Sections~\ref{sec:conclusions} and~\ref{sec:future-work}, respectively.
+In this work, we present an extensible behavioural emulator of a DVS using a conventional digital camera as a sensor. Basing the emulator on widely available hardware allows computational neuroscientists to include video as a spike-encoded input without the cost of a DVS. We present our basic emulator in Section~\ref{sec:basic-emulator}. In Section~\ref{sec:emu-extensions} we present our extensions to the emulator. Results are given in Section~\ref{sec:results}; conclusions and suggestions for future work are given in Sections~\ref{sec:conclusions} and~\ref{sec:future-work}, respectively.
 
 
 \section{The basic emulator}
@@ -120,7 +121,7 @@ A Dynamic Vision Sensor is a device which transforms intensity changes (in a log
 
 To emulate a frame-free system, we convert pixels' brightness differences into events. Our emulator works by analysing the difference between the latest frame captured from the camera and a reference frame. If a pixel changes by more than a certain threshold ($H$), then we generate an event which contains the pixel's coordinates and whether the change was positive or negative. 
 
-Figure~\ref{fig:dvs_emu} shows the DVS emulation framework diagram, we obtain an image (\textsf{IMG}) from a video source and subtract a reference frame from it  (\textsf{REF}). We then apply a threshold filter to the difference frame (\textsf{DIFF}), the remaining pixels are considered \textit{raw spikes} (\textsf{SPKS}$\mathsf{_R}$). We can optionally post-process these pixels, as we'll demonstrate in Section~\ref{sec:local_inhibition}, but we must encode them so that they can be emitted as events (\textsf{SPKS}$\mathsf{_E}$). Finally, depending on the selected type of output encoding, we simulate a receiver and update the reference frame accordingly. 
+Figure~\ref{fig:dvs_emu} shows the DVS emulation framework diagram, we obtain an image (\textsf{\footnotesize IMG}) from a video source and subtract a reference frame from it  (\textsf{\footnotesize REF}). We then apply a threshold filter to the difference frame (\textsf{\footnotesize DIFF}), the remaining pixels are considered \textit{raw spikes} (\textsf{\footnotesize SPKS}$\mathsf{_R}$). We can optionally post-process these pixels, as we'll demonstrate in Section~\ref{sec:local_inhibition}, but we must encode them so that they can be emitted as events (\textsf{\footnotesize SPKS}$\mathsf{_E}$). Finally, depending on the selected type of output encoding, we simulate a receiver and update the reference frame accordingly. 
 
 \begin{figure}[htb]
   \centering
@@ -140,7 +141,7 @@ Pixels in DVSs have a logarithmic response to light intensity. Similarly, most c
 
 
 
-We have constrained the output of our system to emit events in discrete time, so we divide time period $T$ into $N_{b}$ bins of width $t_{b}$ (Fig.~\ref{fig:time_bins}), and neurons (representing pixels) are only allowed to spike once per time bin. For example, if time interval $T = 10 ms$ and $N_{b} = 10$ then $t_{b} = 1 ms$, so neurons would fire at most once per millisecond. Since we are developing a real-time system, all events should be emitted between frames, the maximum number of spikes per neuron per frame is $N_{b}$.
+We have constrained the output of our system to emit events in discrete time, so we divide time period $T$ into $N_{b}$ bins of width $t_{b}$ (Fig.~\ref{fig:time_bins}), and neurons (representing pixels) are only allowed to spike once per time bin. For example, if time interval $T = 10 ms$ and $N_{b} = 10$ then $t_{b} = 1 ms$, so neurons would fire at most once per millisecond. Since we are developing a real-time system, all events should be emitted between frames, so the maximum number of spikes per neuron per frame is $N_{b}$.
 
 \begin{figure}[hbt]
   \centering
@@ -177,10 +178,10 @@ Another extension adds robustness to transmission by adding a history decay mech
 \end{figure}
 
 
-\subsection{Spike time encoding}
+\subsection{Spike-time encoding}
 \label{sec:output-modes}
 
-One way to prevent high spike rates is to encode the brightness difference in the time a spike is emitted, similar to pulse position modulation~\cite{book:ppm}. That is each time bin represents a brightness change, in either a linear or logarithmic scale. Furthermore, there's evidence that neurons use spike timing to encode values~\cite{Singer1999189} and some theories of neural computation require spike-time coding~\cite{izhikevich2006polychronization}. 
+One way to prevent high spike rates is to encode the brightness difference in the time a spike is emitted, similar to how pulse-position modulation works~\cite{book:ppm}. That is each time bin represents a brightness change, in either a linear or logarithmic scale. Furthermore, there's evidence that neurons use spike timing to encode values~\cite{Singer1999189} and some theories of neural computation require spike-time coding~\cite{izhikevich2006polychronization}. 
 
 
 \begin{figure}[hbt]
@@ -238,15 +239,15 @@ If a receiver wants to decode the spikes, it needs to figure out the time at whi
 \end{figure} 
 
 
-Let $\Delta t$ be the difference in arrival time between the current spike and the end of the previous spike's frame (middle dotted line in  Fig.~\ref{fig:linear_time_calc}). To calculate it we use
+Let $\Delta t$ be the difference in arrival time between the current spike and the end of the previous spike's frame (Fig.~\ref{fig:linear_time_calc}, center). To calculate it we use
 \begin{equation}
-\Delta t = t_{now} -  \left(t_{last} + N_{H}^{last}W_{b}\right)
+\Delta t = t_{now} -  \left(t_{last} + N_{H}^{last}t_{b}\right)
 \label{eq:time_diff}
 \end{equation}
 where $N_{H}^{last}W_{b}$ shifts $t_{last}$ to the end of its frame. By having $\Delta t$ anchored at the beginning of a frame we can compute its bin with the remainder of the division with time period $T$.
 
 \begin{equation}
-C^{now}_{b} = \frac{ \mathrm{mod}\left(\Delta t, \;\; T\right) }{ W_{b} }
+C^{now}_{b} = \frac{ \mathrm{mod}\left(\Delta t, \;\; T\right) }{ t_{b} }
 \label{eq:bin_compute}
 \end{equation}
 here, `$\mathrm{mod}$' calculates its arguments division remainder. Now that the time bin $C_{b}$ is known we can compute the brightness difference with
@@ -256,7 +257,7 @@ here, `$\mathrm{mod}$' calculates its arguments division remainder. Now that the
 \end{equation}
 
 %and reduce the probability of getting the wrong value
-We've mentioned before that the maximum brightness difference in linear scale is $N_{b}\cdot H$, by using a logarithmic scale, we can encode larger brightness differences and even do so with wider time bins, which reduces the chances of wrongly decoding spikes. If the maximum brightness difference possible is 255 and the threshold is 12, we only need 5 time bins to express the largest change. 
+We've mentioned before that the maximum brightness difference in linear scale is $N_{b}\cdot H$, by using a logarithmic scale we can encode larger brightness differences and even do so with wider time bins. This also reduces the chances of wrongly decoding spikes. If the maximum brightness difference possible is 255 and the threshold is 12, we only need 5 time bins to express the largest change. 
 %Since we are using a single spike, the value encoded in spike timing will be an approximate one. 
 The time bin can be calculated with Equation~\ref{eq:log_bin_calc}. Figure~\ref{fig:exponential_time} shows the relation of spike time and brightness change with logarithmic scale.
 \begin{equation}
@@ -272,13 +273,13 @@ Since a single spike per pixel per frame is emitted, we are sending an underesti
   \centering
   \includegraphics[width=0.45\textwidth]{spike_values_exp}
   
-  \caption{Spike-time coding, decoding values in logarithmic scale. Frame rate was 30 FPS and we used 7 bits (time bins). }
+  \caption{Spike-time coding. Decoding values in logarithmic scale. Frame rate was 30 FPS and we used 7 bits (time bins). }
   \label{fig:exponential_time}
 \end{figure} 
 
 Decoding (Fig.~\ref{fig:exponential_time}) can be done in a similar way to the linear case, but the receiver can only record an approximate version of $N_{H}$, that is $\tilde{N}_{h} = 2^{\lfloor\log_2 N_{H}\rfloor}$. The time difference with respect to the end of frame for the previous spike is
 \begin{equation}
-\Delta t = t_{now} - \left( t_{last} + \log_{2}\tilde{N}_{H}W_{b} \right)
+\Delta t = t_{now} - \left( t_{last} + \log_{2}\tilde{N}_{H}t_{b} \right)
 \label{eq:time_diff_exp}
 \end{equation}
 
@@ -302,7 +303,7 @@ Initially we described a system where we assume every spike sent will be capture
 \label{eq:ref_update_decay}
 R_{now} = D\cdot R_{last} + N_{H}\cdot H
 \end{equation}
-If no spikes are sent, the values in the reference frame tend to 0 which corresponds to black in our tonal scale; this can be seen as ``forgetting'' the information stored in their reference frame.
+If no spikes are sent, the values in the reference frame tend to 0 which corresponds to black in our tonal scale. This can be seen as ``forgetting'' the information stored in the reference frame.
 %\begin{figure}[htb]
 %  \includegraphics[width=0.5\textwidth]{dvs_emu_decay}
 %
@@ -313,7 +314,7 @@ If no spikes are sent, the values in the reference frame tend to 0 which corresp
 %\subsubsection{Adaptive threshold} 
 \subsection{Adaptive threshold}
 \label{sec:adaptive_thresh}
-Slow-changing pixels in cameras would capture small brightness values each frame thus the difference would never be enough to generate a spike. Meanwhile DVSs' pixels receiving insufficient light to immediately trigger a spike, still gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold on a per-pixel basis, that is reduce it if a pixel did not create a spike. Since threshold values may be lowered, they also have to be increased if a spike was generated. These changes in the threshold effectively add a low-pass filter to the system. 
+Slow-changing pixels in cameras would capture small brightness values each frame thus the difference would never be enough to generate a spike. Meanwhile DVSs' pixels receiving insufficient light to immediately trigger a spike, still gain some charge and, after some time, will generate a spike event. We propose to mimic this behaviour by adapting the threshold on a per-pixel basis, so we reduce the threshold if a pixel did not emit a spike. Since threshold values may be lowered, they also have to be increased if a spike was generated. These changes in the threshold effectively add a temporal low-pass filter to the system. 
 
 %\begin{figure}[htb]
 %
@@ -332,7 +333,7 @@ Slow-changing pixels in cameras would capture small brightness values each frame
 %\subsubsection{Local inhibition} 
 \subsection{Local inhibition}
 \label{sec:local_inhibition}
-In mammalian retinas inhibitory circuits play an important role. Some researchers have suggested that they reduce the number of spikes needed to represent what the eye is sensing~\cite{basab}. Our emulator's inhibition mechanism follows a similar idea; since neighbouring pixels have similar values, we suppose that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX operation (similar to complex cells in the HMAX model~\cite{riesenhuber1999hierarchical}) of pixel areas. An example is shown in Figure~\ref{fig:local_inh}, we chose a 2-by-2 area since it's the smallest 2D one. Initially pixels whose difference was 77, 31, -16 (left side in green and red) where to emit events, but after inhibition only the maximum value (right side in green; 77) will generate a spike, while other values (right side in brown; 0, 31, and 16) are blocked.
+In mammalian retinas inhibitory circuits play an important role. Some researchers have suggested that they reduce the number of spikes needed to represent what the eye is sensing~\cite{basab}. Our emulator's inhibition mechanism follows a similar idea; since neighbouring pixels have similar values, we assume that they are transmitting redundant information. The inhibitory behaviour is simply a local MAX operation (similar to complex cells in the HMAX model~\cite{riesenhuber1999hierarchical}) of pixel areas. An example is shown in Figure~\ref{fig:local_inh}, we chose a 2-by-2 area since it's the smallest 2D one. Initially pixels whose difference was 77, 31, -16 (left side in green and red) where to emit events, but after inhibition only the maximum value (right side in green; 77) will generate a spike, while other values (right side in brown; 0, 31, and 16) are blocked.
 
 %\setcounter{figure}{10} % -------------- fix figure numbers ----------------- %
 \begin{figure}[htb]
@@ -370,6 +371,21 @@ The initial goal was to provide an alternative for computational neuroscientists
   
 \end{figure}
 
+Using conventional cameras, and thus our emulator, enforces certain limitations which we summarize in Table~\ref{tb:constraints}.
+\begin{table}
+  \centering
+  \caption{Emulator limitations.}
+  \label{tb:constraints}
+  \begin{tabular}{l c c}
+    & DVS & Camera (PS3 Eye) \\ 
+    \hline
+    \rule{0pt}{0.4cm}Power consumption & 24 mW & \~120mW\\
+    Response time & 3.6 $\rightarrow$ 15us & 8ms $\rightarrow$ 16ms \\
+    Dynamic range & 120 dB & 60 dB\\
+  \end{tabular}
+\end{table}
+
+
 The emulator can encode video (live or pre-recorded) and we provide a ``virtual camera'' that simulates movement on images so they can also be perceived. Using the virtual camera and the MNIST hand-written digits database~\cite{mnist,mnist:web} we demonstrate the emulator's extensions. To test encodings we converted an MNIST  digit image which we scaled down to $8\times8$ pixels for clarity and the reference frame's values were initialized at half the scale range, Figure~\ref{fig:spike_codes} shows the spike representation using the developed output encodings.
 
 \setcounter{figure}{12} % -------------- fix figure numbers ----------------- %
@@ -398,24 +414,27 @@ The emulator can encode video (live or pre-recorded) and we provide a ``virtual 
 \end{figure*}
 
 
-The inhibitory behaviour will reduce the number of spikes that the emulator produces per frame, while keeping some of the information needed to represent the visual input. Figure~\ref{fig:pre_inh} shows the detected spikes as the digit traverses to the right. After the inhibition step fewer spikes remain while keeping the overall shape~(Fig.~\ref{fig:post_inh}). Since not all the information is sent on the first frame and objects in video generally do not move fast enough to disappear between frames, there is a \textit{persistence of vision}-like effect of spikes for succeeding frames.
+The inhibitory behaviour will reduce the number of spikes that the emulator produces per frame, while keeping some of the information needed to represent the visual input. Figure~\ref{fig:pre_inh} shows the detected spikes as the digit traverses to the right. After the inhibition step fewer spikes remain while keeping the overall shape~(Fig.~\ref{fig:post_inh}). Since not all the information is sent on the first frame and objects in video generally do not move fast enough to disappear between frames, there is a \textit{persistence of vision}-like effect of spikes for succeeding frames. To asses this we removed the spikes that would be generated in the current frame without inhibition (Fig.~\ref{fig:pre_inh}) from the inhibited spike generation (Fig.~\ref{fig:post_inh}), the result (Fig.~\ref{fig:diff_post_inh}) shows spikes that are the result of inhibition in previous frames. This shows a figure that's quite similar to the what we should have detected in preceding frames.
 
 \setcounter{figure}{11} % -------------- fix figure numbers ----------------- %
 \begin{figure}[htb]
   \captionsetup[subfigure]{justification=centering}
   \centering
-  \begin{subfigure}[b]{0.21\textwidth}
-    \includegraphics[width=\textwidth]{pre_inh_frame_262}
-    \caption{Raw spikes.}
+  \begin{subfigure}[b]{0.155\textwidth}
+    \includegraphics[width=\textwidth,trim={3cm 2cm 2cm 2cm},clip] {inhibitory_behaviour__NORMAL___cycle_00000___frame_00035_}
+    \caption{Raw spikes.\\~}
     \label{fig:pre_inh}
   \end{subfigure}
-  ~
-  \begin{subfigure}[b]{0.21\textwidth}
-    \includegraphics[width=\textwidth]{post_inh_frame_262}
-    \caption{Inhibited spikes.}
+  \begin{subfigure}[b]{0.155\textwidth}
+    \includegraphics[width=\textwidth,trim={3cm 2cm 2cm 2cm},clip] {inhibitory_behaviour__INHIBITED___cycle_00000___frame_00035_}
+    \caption{Inhibited spikes.\\~}
     \label{fig:post_inh}
   \end{subfigure}
-
+  \begin{subfigure}[b]{0.155\textwidth}
+    \includegraphics[width=\textwidth,trim={3cm 2cm 2cm 2cm},clip] {inhibitory_behaviour__DIFF___cycle_00000___frame_00035_}
+    \caption{Spikes from previous frames.}
+    \label{fig:diff_post_inh}
+  \end{subfigure}
   \caption[Difference between raw and local inhibited spikes from a traversing image.]{Difference between raw and local inhibited spikes from a traversing image.}
   \label{fig:inh_diff}
 \end{figure}
@@ -457,8 +476,13 @@ Research on encoding spikes using convolution kernels is ongoing. We have explor
 \section*{Acknowledgement}
 %EPSRC??? 
 %HBP???
+The research leading to these results has received funding from the European Research Council under the European Union's Seventh Framework Programme(FP/2007-2013) / ERC Grant Agreement n. 320689 and from the EU Flagship Human Brain Project (FP7-604102).
 
-This research was funded by the Mexican National Science and Technology Council (CONACyT) and Secretariat of Public Education (SEP).
+Garibaldi Pineda García is funded by a National Council for Science and Technology of Mexico PhD Scholarship.
+
+Patrick Camilleri and Steve Furber are supported by EPRSC project EP/K034448/1 (PRiME). 
+
+The authors would like to thank the reviewers for taking the time to review this document and provide useful feedback on the work. They would also like to thank Jim Garside and Viv Woods for help and useful discussions during the course of this paper.
 
 %The authors would like to thank John Viv Woods and Jim Garside for proofreading 
 %This work was inspired by talks at the Capo Caccia Workshop.
