@@ -179,7 +179,7 @@ data_mask = uint8(cam_res - 1)
 polarity = POLARITY_DICT[ MERGED_POLARITY ]
 output_type = OUTPUT_TIME
 history_weight = 1.0
-threshold = 24 # ~ 0.05*255
+threshold = 30 # ~ 0.05*255
 max_threshold = 180 # 12*15 ~ 0.7*255
 
 scale_width = 0
@@ -223,7 +223,7 @@ video_dev = cv2.VideoCapture(0) # webcam
 try:
   video_dev.set(CV_CAP_PROP_FRAME_WIDTH, 320)
   video_dev.set(CV_CAP_PROP_FRAME_HEIGHT, 240)
-  video_dev.set(CV_CAP_PROP_FPS, 125)
+  video_dev.set(CV_CAP_PROP_FPS, 60)
 except:
   pass
 
@@ -231,14 +231,15 @@ try:
   video_dev.set(CV_CAP_PROP_AUTO_EXPOSURE, 0)
 except:
   pass
-try:
-  video_dev.set(CV_CAP_PROP_GAIN, 16)
-except:
-  pass
-try:
-  video_dev.set(CV_CAP_PROP_EXPOSURE, 64)
-except:
-  pass
+
+# try:
+#   video_dev.set(CV_CAP_PROP_GAIN, 16)
+# except:
+#   pass
+# try:
+#   video_dev.set(CV_CAP_PROP_EXPOSURE, 64)
+# except:
+#   pass
   
 fps = video_dev.get(CV_CAP_PROP_FPS)
 max_time_ms = int(1000./fps)
