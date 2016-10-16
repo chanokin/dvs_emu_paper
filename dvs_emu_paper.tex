@@ -16,7 +16,7 @@
 %\usepackage{breakurl}
 %\fi
 
-\usepackage{todonotes}
+%\usepackage{todonotes}
 
 \usepackage[numbers]{natbib}
 %\usepackage[backend=bibtex]{biblatex}
@@ -37,6 +37,7 @@
 \usepackage{url}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{float}
 
 
 \hyphenation{op-tical net-works semi-conduc-tor}
@@ -422,10 +423,9 @@ Using conventional cameras, and thus our emulator, enforces certain limitations 
 \end{table}
 
 
-The emulator can encode video (live or pre-recorded) and we provide a ``virtual camera'' that simulates movement on images so they can also be perceived. Using the virtual camera and the MNIST hand-written digits database~\cite{mnist,mnist:web} we demonstrate the emulator's extensions. To test encodings we converted an MNIST  digit image which we scaled down to $8\times8$ pixels for clarity and the reference frame's values were initialized at half the scale range, Figure~\ref{fig:spike_codes} shows the spike representation using the developed output encodings.
 
-\setcounter{figure}{12} % -------------- fix figure numbers ----------------- %
-\begin{figure*}[htb]
+%\setcounter{figure}{14} % -------------- fix figure numbers ----------------- %
+\begin{figure*}[t]
   \captionsetup[subfigure]{justification=centering}
   
   \centering
@@ -449,11 +449,12 @@ The emulator can encode video (live or pre-recorded) and we provide a ``virtual 
   \label{fig:spike_codes}
 \end{figure*}
 
+The emulator can encode video (live or pre-recorded) and we provide a ``virtual camera'' that simulates movement on images so they can also be perceived. Using the virtual camera and the MNIST hand-written digits database~\cite{mnist} we demonstrate the emulator's extensions. To test encodings we converted an MNIST digit image which we scaled down to $8\times8$ pixels for clarity and the reference frame's values were initialized at half the scale range, Figure~\ref{fig:spike_codes} shows the spike representation using the developed output encodings.
 
-The inhibitory behaviour will reduce the number of spikes that the emulator produces per frame, while keeping some of the information needed to represent the visual input. Figure~\ref{fig:pre_inh} shows the detected spikes as the digit traverses to the right. After the inhibition step fewer spikes remain while keeping the overall shape~(Fig.~\ref{fig:post_inh}). Since not all the information is sent on the first frame and objects in video generally do not move fast enough to disappear between frames, there is a \textit{persistence of vision}-like effect of spikes for succeeding frames. To asses this we removed the spikes that would be generated in the current frame without inhibition (Fig.~\ref{fig:pre_inh}) from the inhibited spike generation (Fig.~\ref{fig:post_inh}), the result (Fig.~\ref{fig:diff_post_inh}) shows spikes that are the result of inhibition in previous frames. This shows a figure that's quite similar to the what we should have detected in preceding frames.
 
-\setcounter{figure}{11} % -------------- fix figure numbers ----------------- %
-\begin{figure}[htb]
+The inhibitory behaviour will reduce the number of spikes that the emulator produces per frame, while keeping some of the information needed to represent the visual input. Figure~\ref{fig:pre_inh} shows the detected spikes as the digit traverses to the right. After the inhibition step fewer spikes remain while keeping the overall shape~(Fig.~\ref{fig:post_inh}). 
+%\setcounter{figure}{11} % -------------- fix figure numbers ----------------- %
+\begin{figure}[hbt]
   \captionsetup[subfigure]{justification=centering}
   \centering
   \begin{subfigure}[b]{0.155\textwidth}
@@ -474,23 +475,27 @@ The inhibitory behaviour will reduce the number of spikes that the emulator prod
   \caption[Difference between raw and local inhibited spikes from a traversing image.]{Difference between raw and local inhibited spikes from a traversing image.}
   \label{fig:inh_diff}
 \end{figure}
+
+Since not all the information is sent on the first frame and objects in video generally do not move fast enough to disappear between frames, there is a \textit{persistence of vision}-like effect of spikes for succeeding frames. To asses this we removed the spikes that would be generated in the current frame without inhibition (Fig.~\ref{fig:pre_inh}) from the inhibited spike generation (Fig.~\ref{fig:post_inh}), the result (Fig.~\ref{fig:diff_post_inh}) shows spikes that are the result of inhibition in previous frames. This shows a figure that's quite similar to the what we should have detected in preceding frames.
+
 %%%%%%%%%%%%%%
 %\footnotetext{Notice that most images in the tests are shown inverted. They originally where white over black and are now altered to black over white to better capture the behaviour}
 %%%%%%%%%%%%%%
-
-Finally, we tested the weight decay mechanism, an example of how the receiver can recover from a loss of spikes is shown in Figure~\ref{fig:history_decay}; of particular interest are the $sender$ and $receiver$ rows, which show their respective reference frames (i.e. what both ``see''). The leftmost column illustrates how the system starts and what spikes are going to be sent (``spikes'' row).
-
-If some of the spikes are lost (second column), the receiver cannot reconstruct the picture correctly. After 40 waves of spikes (rightmost column),  pixels in the absolute difference between the reference images ($|send-recv|$ row) have an 8.6 average value which is bellow the threshold. This means that the missing information has been retransmitted due to history decay. Another effect of this mechanism is that the need to constantly move the image is removed since the reference values are continuously lowered; this effect furthers the difference between the image and the reference up to a point at which spikes are produced.
-
-\setcounter{figure}{13} % -------------- fix figure numbers ----------------- %
-\begin{figure}[htb]
-%  \captionsetup[subfigure]{justification=centering}
+%\setcounter{figure}{13} % -------------- fix figure numbers ----------------- %
+\begin{figure}[hbt]
+  %  \captionsetup[subfigure]{justification=centering}
   \centering
   
   \includegraphics[width=0.4\textwidth]{history_decay}
   \caption{History decay helps to remove transmission errors (1~spike-per-pixel with linear spike-time encoding).}
   \label{fig:history_decay}
 \end{figure}
+
+Finally, we tested the weight decay mechanism, an example of how the receiver can recover from a loss of spikes is shown in Figure~\ref{fig:history_decay}; of particular interest are the $sender$ and $receiver$ rows, which show their respective reference frames (i.e. what both ``see''). The leftmost column illustrates how the system starts and what spikes are going to be sent (``spikes'' row).
+
+If some of the spikes are lost (second column), the receiver cannot reconstruct the picture correctly. After 40 waves of spikes (rightmost column),  pixels in the absolute difference between the reference images ($|send-recv|$ row) have an 8.6 average value which is bellow the threshold. This means that the missing information has been retransmitted due to history decay. Another effect of this mechanism is that the need to constantly move the image is removed since the reference values are continuously lowered; this effect furthers the difference between the image and the reference up to a point at which spikes are produced.
+
+
 
 
 \section{Conclusion}
